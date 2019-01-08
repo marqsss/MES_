@@ -26,7 +26,7 @@ namespace mes
 		arma::mat getDndx(const arma::mat &JacInv, const arma::mat &dKsi, const arma::mat &dEta);
 		arma::mat getLocalCMatrix(const arma::dvec &x, const arma::dvec &y, double c, double ro, bool debug = false);
 		arma::mat getLocalCMatrix(Grid& GRID, unsigned int index, bool debug = false);
-		arma::mat getGlobalHMatrix();
+		arma::mat getGlobalHMatrix(Grid& grid, bool debug=false);
 
 	private:
 		//mes::Grid& grid;

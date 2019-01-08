@@ -34,7 +34,7 @@ mes::Grid::Grid(std::string filename)
 		for (unsigned int col = 0; col < cols - 1; col++)
 			for (unsigned int row = 0; row < rows - 1; row++)
 				elements.emplace_back(nodes.at((col*rows) + row), nodes.at(((col + 1)*rows) + row + 1),
-					nodes.at((col *rows) + 1 + row), nodes.at(((col + 1)*rows) + row));
+					nodes.at((col *rows) + 1 + row), nodes.at(((col + 1)*rows) + row), col*(rows-1)+row);
 	}
 	else
 		printf("Could not open source file\n");
@@ -44,9 +44,9 @@ mes::Grid::Grid(std::string filename)
 void mes::Grid::print(bool verbose)
 {
 	if (!verbose)
-		std::cout << "Grid of (" << width << ":" << height << ") size with k="<<c<<", ("
-		<< nodes.size() << "; " << cols << "*" << rows << " = " << cols*rows << ") nodes, "
-		<< elements.size() << "(" << (cols - 1)*(rows - 1) << ") elements." << std::endl;
+		std::cout << "Grid of (" << width << "px:" << height << "px) size with c="<<c<<";\n"
+		<< nodes.size() << " (" << cols << "*" << rows << " = " << cols*rows << ") nodes;\n"
+		<< elements.size() << " (" << (cols - 1)<<"*"<<(rows - 1) <<" = "<< (cols - 1) * (rows - 1) << ") elements." << std::endl;
 	else
 	{
 		std::cout << "Grid of (" << width << ":" << height << ") size. K="<<c<<". Nodes:" << std::endl;

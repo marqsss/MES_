@@ -18,6 +18,9 @@ namespace mes
 		double getC() { return c; }
 		void setC(double C) { c = C; }
 		double getRo() { return ro; }
+		unsigned int getSize() { return elements.size(); }
+		unsigned int getCols() { return cols; }
+		unsigned int getRows() { return rows; }
 		Element* getElement(unsigned int index) { return &(elements.at(index)); }
 
 	private:

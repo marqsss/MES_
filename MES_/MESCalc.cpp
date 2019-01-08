@@ -187,7 +187,15 @@ arma::mat mes::Calc::getLocalCMatrix(Grid & GRID, unsigned int index, bool debug
 	return getLocalCMatrix(x, y, GRID.getC(), GRID.getRo(), debug);
 }
 
-arma::mat mes::Calc::getGlobalHMatrix()
+arma::mat mes::Calc::getGlobalHMatrix(Grid& grid, bool debug)
 {
-	return arma::mat();
+	if (debug) // first and last element
+		std::cout << *grid.getElement(0) << std::endl << *grid.getElement(grid.getSize()-1);
+	arma::mat res(grid.getCols(), grid.getRows(), arma::fill::zeros);
+	for (int i = 0; i < grid.getSize(); i++)
+	{
+		Element *e = grid.getElement(i);
+
+	}
+	return res;
 }
