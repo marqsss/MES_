@@ -1,6 +1,15 @@
+# parameters for MES grid, as used in the provided excel file
+# specific heat (c)
 700
+# density (ro)
 7800
+# width of grid in units (pixels)
 50
+# height of grid in units (pixels)
 60
+# number of Node columns
 21
+# number of Node rows
 25
+# initial temperature of all Nodes
+100

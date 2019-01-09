@@ -8,8 +8,7 @@ namespace mes
 	class Node
 	{
 	public:
-		Node();
-		Node(double X, double Y, unsigned int NR, double T = 0) : x(X), y(Y), index(NR), t(T){};
+		Node(double X, double Y, unsigned int idx, double T = 0) : x(X), y(Y), index(idx), t(T){};
 		friend std::ostream& operator<<(std::ostream& s, const Node n)
 		{
 			s << "#" << n.index << "(" << n.x << ":" << n.y << "@" << n.t << ")";

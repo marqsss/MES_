@@ -145,9 +145,17 @@ arma::mat mes::Calc::getLocalHMatrix(double k, const arma::dvec &x, const arma::
 arma::mat mes::Calc::getLocalHMatrix(Grid & GRID, unsigned int index, bool debug)
 {
 	Element *e = GRID.getElement(index);
-	arma::dvec x = { e->getNodes().at(0).x , e->getNodes().at(1).x , e->getNodes().at(2).x , e->getNodes().at(3).x };
-	arma::dvec y = { e->getNodes().at(0).y , e->getNodes().at(1).y , e->getNodes().at(2).y , e->getNodes().at(3).y };
-	return getLocalHMatrix(e->getK(), x, y, debug);
+	arma::dvec x = { e->getNodes().at(0)->x , e->getNodes().at(1)->x , e->getNodes().at(2)->x , e->getNodes().at(3)->x };
+	arma::dvec y = { e->getNodes().at(0)->y , e->getNodes().at(1)->y , e->getNodes().at(2)->y , e->getNodes().at(3)->y };
+	return getLocalHMatrix(e->getConductivity(), x, y, debug);
+}
+
+arma::mat mes::Calc::getLocalHMatrix(Element& e, bool debug)
+{
+	arma::dvec x = { e.getNodes().at(0)->x , e.getNodes().at(1)->x , e.getNodes().at(2)->x , e.getNodes().at(3)->x };
+	arma::dvec y = { e.getNodes().at(0)->y , e.getNodes().at(1)->y , e.getNodes().at(2)->y , e.getNodes().at(3)->y };
+	return getLocalHMatrix(e.getConductivity(), x, y, debug);
+
 }
 
 arma::mat mes::Calc::getLocalCMatrix(const arma::dvec &x, const arma::dvec &y, double c, double ro, bool debug)
@@ -182,20 +190,40 @@ arma::mat mes::Calc::getLocalCMatrix(const arma::dvec &x, const arma::dvec &y, d
 arma::mat mes::Calc::getLocalCMatrix(Grid & GRID, unsigned int index, bool debug)
 {
 	Element *e = GRID.getElement(index);
-	arma::dvec y = { e->getNodes().at(0).x , e->getNodes().at(1).x , e->getNodes().at(2).x , e->getNodes().at(3).x };
-	arma::dvec x = { e->getNodes().at(0).y , e->getNodes().at(1).y , e->getNodes().at(2).y , e->getNodes().at(3).y };
-	return getLocalCMatrix(x, y, GRID.getC(), GRID.getRo(), debug);
+	arma::dvec y = { e->getNodes().at(0)->x , e->getNodes().at(1)->x , e->getNodes().at(2)->x , e->getNodes().at(3)->x };
+	arma::dvec x = { e->getNodes().at(0)->y , e->getNodes().at(1)->y , e->getNodes().at(2)->y , e->getNodes().at(3)->y };
+	return getLocalCMatrix(x, y, GRID.getSpecificHeat(), GRID.getDensity(), debug);
 }
 
-arma::mat mes::Calc::getGlobalHMatrix(Grid& grid, bool debug)
+arma::mat mes::Calc::getGlobalMatrix(Grid& grid, bool HorC, bool debug)
 {
 	if (debug) // first and last element
-		std::cout << *grid.getElement(0) << std::endl << *grid.getElement(grid.getSize()-1);
-	arma::mat res(grid.getCols(), grid.getRows(), arma::fill::zeros);
-	for (int i = 0; i < grid.getSize(); i++)
-	{
-		Element *e = grid.getElement(i);
+		std::cout << *grid.getElement(0) << std::endl << *grid.getElement(grid.getSize() - 1) << std::endl;
+	arma::mat res(grid.getCols() * grid.getRows(), grid.getCols() * grid.getRows(), arma::fill::zeros);
+	if (debug)
+		std::cout << sizeof(double) << "*" << res.size() << " = " << sizeof(double)*res.size() << "b = "
+		<< sizeof(double)*res.size() / 1024.0 << "kb = " << sizeof(double)*res.size() / 1024.0 / 1024.0 << "mb" << std::endl;
 
+	for (unsigned int k = 0; k < grid.getSize(); k++)
+	{
+		Element *e = grid.getElement(k);
+		arma::mat temp;
+		if (HorC)
+			temp = getLocalHMatrix(*e);
+		else
+			temp = getLocalCMatrix(grid, k);
+
+		if(debug && !(k % 100))
+			std::cout << "inserting " << *e << " into (";
+		for(unsigned int i=0; i<temp.n_cols; i++)
+			for (unsigned int j = 0; j < temp.n_rows; j++)
+			{
+				res(e->getNodes().at(j)->index, e->getNodes().at(i)->index) = temp(i, j);
+				if (debug && !(k % 100))
+					std::cout << e->getNodes().at(j)->index << ":" << e->getNodes().at(i)->index << ", ";
+			}
+		if (debug && !(k % 100))
+			std::cout << ")" << std::endl;
 	}
 	return res;
 }
