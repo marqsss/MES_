@@ -28,7 +28,9 @@ namespace mes
 		arma::mat getLocalCMatrix(const arma::dvec &x, const arma::dvec &y, double c, double ro, bool debug = false);
 		arma::mat getLocalCMatrix(Grid& GRID, unsigned int index, bool debug = false);
 		// HorC: true for H_matrix, false for C_matrix; default true
-		arma::mat getGlobalMatrix(Grid& grid, bool HorC = true, bool debug = false); 
+		arma::mat getGlobalMatrix(Grid& grid, bool HorC = true, bool debug = false);
+		double getMinTemp(Grid& grid);
+		double getMaxTemp(Grid& grid);
 
 	private:
 		//mes::Grid& grid;

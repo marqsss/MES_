@@ -45,11 +45,12 @@ int main()
 		case 2:
 			grid.loadFromFile("TestCaseGrid.txt");
 			grid.print();
-			globH = calc.getGlobalMatrix(grid);
+			globH = calc.getGlobalMatrix(grid, true);
 			globH.print("Global H:");
 
 			globC = calc.getGlobalMatrix(grid, false);
 			globC.print("Global C:");
+			std::cout << "Max temp: " << calc.getMaxTemp(grid) << ", min temp: " << calc.getMinTemp(grid) << std::endl;
 			break;
 		}
 	}

@@ -209,6 +209,12 @@ arma::mat mes::Calc::getGlobalMatrix(Grid& grid, bool HorC, bool debug)
 		Element *e = grid.getElement(k);
 		arma::mat temp;
 		temp = HorC ? getLocalHMatrix(*e, debug) : getLocalCMatrix(grid, k, debug);
+		if (debug)
+		{
+			std::string s = "Local matrix ";
+			s.append(HorC ? "H" : "C").append(" #").append(std::to_string(k)).append(":");
+			temp.print(s);
+		}
 
 		if (debug && !(k % 100))
 			std::cout << "inserting " << *e << " into (";
@@ -222,5 +228,25 @@ arma::mat mes::Calc::getGlobalMatrix(Grid& grid, bool HorC, bool debug)
 		if (debug && !(k % 100))
 			std::cout << ")" << std::endl;
 	}
+	return res;
+}
+
+double mes::Calc::getMinTemp(Grid& grid)
+{
+	std::vector<Node>& temp = grid.getNodes();
+	double res = temp.at(0).t;
+	for (unsigned int j = 1; j < temp.size(); j++)
+		if(res > temp.at(j).t)
+			res = temp.at(j).t;
+	return res;
+}
+
+double mes::Calc::getMaxTemp(Grid& grid)
+{
+	std::vector<Node>& temp = grid.getNodes();
+	double res = temp.at(0).t;
+	for (unsigned int j = 1; j < temp.size(); j++)
+		if (res < temp.at(j).t)
+			res = temp.at(j).t;
 	return res;
 }

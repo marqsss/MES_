@@ -30,11 +30,11 @@ void mes::Grid::loadFromFile(std::string filename)
 		do
 			std::getline(file, line);
 		while (line.empty() || line.at(0) == '#');
-		n_cols = std::stod(line);
+		n_cols = std::stoul(line);
 		do
 			std::getline(file, line);
 		while (line.empty() || line.at(0) == '#');
-		n_rows = std::stod(line);
+		n_rows = std::stoul(line);
 		do
 			std::getline(file, line);
 		while (line.empty() || line.at(0) == '#');
@@ -43,6 +43,22 @@ void mes::Grid::loadFromFile(std::string filename)
 			std::getline(file, line);
 		while (line.empty() || line.at(0) == '#');
 		conduct = std::stod(line);
+		do
+			std::getline(file, line);
+		while (line.empty() || line.at(0) == '#');
+		totalTime = std::stod(line);
+		do
+			std::getline(file, line);
+		while (line.empty() || line.at(0) == '#');
+		timeStep = std::stod(line);
+		do
+			std::getline(file, line);
+		while (line.empty() || line.at(0) == '#');
+		ambientTemperature = std::stod(line);
+		do
+			std::getline(file, line);
+		while (line.empty() || line.at(0) == '#');
+		alpha = std::stod(line);
 
 		// create nodes and elements from the data
 		for (unsigned int col = 0; col < n_cols; col++)

@@ -29,6 +29,7 @@ namespace mes
 		unsigned int getCols() { return n_cols; }
 		unsigned int getRows() { return n_rows; }
 		Element* getElement(unsigned int index) { return &(elements.at(index)); }
+		std::vector<Node>& getNodes() { return nodes; }
 
 	private:
 		std::vector<Node> nodes;
@@ -39,6 +40,10 @@ namespace mes
 		std::vector<Element> elements;
 		double specific_heat;
 		double density;
+		double totalTime;
+		double timeStep;
+		double ambientTemperature;
+		double alpha;
 	};
 }
 
