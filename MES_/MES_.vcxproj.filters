@@ -21,6 +21,9 @@
     <Text Include="A.txt">
       <Filter>Pliki zasobów</Filter>
     </Text>
+    <Text Include="TestCaseGrid.txt">
+      <Filter>Pliki zasobów</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MES_.cpp">

@@ -116,6 +116,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="A.txt" />
+    <Text Include="TestCaseGrid.txt" />
     <Text Include="testGrid.txt" />
   </ItemGroup>
   <ItemGroup>

@@ -13,7 +13,14 @@ namespace mes
 	class Grid
 	{
 	public:
-		Grid(std::string filename);
+		Grid() {}
+		// parameters in the text file must be separated by new lines and must be in this order:
+		// specific heat (c), density(ro), width of grid in units(pixels), height of grid in units(pixels),
+		// number of Node columns, number of Node rows, initial temperature of all Nodes, conductivity,
+		// time of simulation(s), time step(s), ambient temperature, alpha
+		Grid(std::string filename) { loadFromFile(filename); }
+		void reset();
+		void loadFromFile(std::string filename);
 		void print(bool verbose = false);
 		double getSpecificHeat() { return specific_heat; }
 		void setSpecificHeat(double C) { specific_heat = C; }

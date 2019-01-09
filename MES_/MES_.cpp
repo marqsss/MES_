@@ -6,29 +6,56 @@
 
 int main()
 {
-	mes::Grid grid("testGrid.txt");
-	grid.print();
-
+	int choice = 1;
+	arma::mat globH;
+	arma::mat globC;
+	arma::mat temp;
+	mes::Grid grid;
 	mes::Calc calc;
-	
-	arma::mat temp = calc.getLocalHMatrix(grid, 0);
-	for (unsigned int i = 0; i < temp.n_cols; i++)
+	while (choice != 0)
 	{
-		for (unsigned int j = 0; j < temp.n_rows; j++)
+		grid.reset();
+		std::cout << "0: exit\n1: excel test\n2: pdf test (test case)" << std::endl;
+		std::cin >> choice;
+		switch (choice)
 		{
-			std::cout << "\t" << temp(i, j);
+		case 0:
+			break;
+		case 1:
+
+			grid.loadFromFile("testGrid.txt");
+			grid.print();
+
+			temp = calc.getLocalHMatrix(grid, 0);
+			for (unsigned int i = 0; i < temp.n_cols; i++)
+			{
+				for (unsigned int j = 0; j < temp.n_rows; j++)
+				{
+					std::cout << "\t" << temp(i, j);
+				}
+				std::cout << std::endl;
+			}
+			temp.print("H:");
+			calc.getLocalCMatrix(grid, 0).print("Macierz C:");
+
+			globH = calc.getGlobalMatrix(grid);
+
+			globC = calc.getGlobalMatrix(grid, false);
+			break;
+		case 2:
+			grid.loadFromFile("TestCaseGrid.txt");
+			grid.print();
+			globH = calc.getGlobalMatrix(grid);
+			globH.print("Global H:");
+
+			globC = calc.getGlobalMatrix(grid, false);
+			globC.print("Global C:");
+			break;
 		}
-		std::cout << std::endl;
 	}
-	temp.print("H:");
-	calc.getLocalCMatrix(grid, 0).print("Macierz C:");
-	
-	arma::mat globH = calc.getGlobalMatrix(grid);
-
-	arma::mat globC = calc.getGlobalMatrix(grid, false);
 
 
 
-	system("pause");
+	//system("pause");
 	return 0;
 }

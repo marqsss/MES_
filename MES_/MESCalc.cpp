@@ -4,8 +4,8 @@
 
 double mes::Calc::ksi = 1.0 / sqrt(3);
 double mes::Calc::eta = 1.0 / sqrt(3);
-arma::dvec mes::Calc::ksiCol = {-1.0 / sqrt(3), 1.0 / sqrt(3), 1.0 / sqrt(3), -1.0 / sqrt(3)};
-arma::dvec mes::Calc::etaCol = {-1.0 / sqrt(3), -1.0 / sqrt(3), 1.0 / sqrt(3), 1.0 / sqrt(3)};
+arma::dvec mes::Calc::ksiCol = { -1.0 / sqrt(3), 1.0 / sqrt(3), 1.0 / sqrt(3), -1.0 / sqrt(3) };
+arma::dvec mes::Calc::etaCol = { -1.0 / sqrt(3), -1.0 / sqrt(3), 1.0 / sqrt(3), 1.0 / sqrt(3) };
 
 //mes::Calc::Calc(Grid& GRID): grid(GRID)
 mes::Calc::Calc()
@@ -20,8 +20,8 @@ mes::Calc::Calc()
 
 arma::dvec mes::Calc::transformKsiEta(const arma::dvec &pos)
 {
-	arma::dvec res = {arma::sum(pos%nMatrix.row(0)), arma::sum(pos%nMatrix.row(1)),
-		arma::sum(pos%nMatrix.row(2)), arma::sum(pos%nMatrix.row(3))};
+	arma::dvec res = { arma::sum(pos%nMatrix.row(0)), arma::sum(pos%nMatrix.row(1)),
+		arma::sum(pos%nMatrix.row(2)), arma::sum(pos%nMatrix.row(3)) };
 	return res;
 }
 
@@ -48,14 +48,14 @@ arma::mat mes::Calc::getDNDEta()
 arma::mat mes::Calc::getJacobian(const arma::dvec &x, const arma::dvec &y)
 {
 	arma::mat res(4, 4), deta = getDNDEta(), dksi = getDNDKsi();
-	res.row(0) = arma::drowvec{arma::sum(deta.col(0) % x), arma::sum(deta.col(1) % x),
-		arma::sum(deta.col(2) % x), arma::sum(deta.col(3) % x)};
-	res.row(1) = arma::drowvec{arma::sum(deta.col(0) % y), arma::sum(deta.col(1) % y),
-		arma::sum(deta.col(2) % y), arma::sum(deta.col(3) % y)};
-	res.row(2) = arma::drowvec{arma::sum(dksi.col(0) % x), arma::sum(dksi.col(1) % x),
-		arma::sum(dksi.col(2) % x), arma::sum(dksi.col(3) % x)};
-	res.row(3) = arma::drowvec{arma::sum(dksi.col(0) % y), arma::sum(dksi.col(1) % y),
-		arma::sum(dksi.col(2) % y), arma::sum(dksi.col(3) % y)};
+	res.row(0) = arma::drowvec{ arma::sum(deta.col(0) % x), arma::sum(deta.col(1) % x),
+		arma::sum(deta.col(2) % x), arma::sum(deta.col(3) % x) };
+	res.row(1) = arma::drowvec{ arma::sum(deta.col(0) % y), arma::sum(deta.col(1) % y),
+		arma::sum(deta.col(2) % y), arma::sum(deta.col(3) % y) };
+	res.row(2) = arma::drowvec{ arma::sum(dksi.col(0) % x), arma::sum(dksi.col(1) % x),
+		arma::sum(dksi.col(2) % x), arma::sum(dksi.col(3) % x) };
+	res.row(3) = arma::drowvec{ arma::sum(dksi.col(0) % y), arma::sum(dksi.col(1) % y),
+		arma::sum(dksi.col(2) % y), arma::sum(dksi.col(3) % y) };
 	return res;
 }
 
@@ -73,12 +73,12 @@ arma::mat mes::Calc::getJacInv(const arma::mat &Jac, const arma::mat &detJ)
 {
 	arma::mat JacInv;
 	for (int i = 0; i < 4; i++)
-		JacInv.insert_cols(i, arma::dvec{Jac.col(i)(3) / detJ(i),-Jac.col(i)(1) / detJ(i),
-			-Jac.col(i)(2) / detJ(i),Jac.col(i)(0) / detJ(i)});
+		JacInv.insert_cols(i, arma::dvec{ Jac.col(i)(3) / detJ(i),-Jac.col(i)(1) / detJ(i),
+			-Jac.col(i)(2) / detJ(i),Jac.col(i)(0) / detJ(i) });
 	return JacInv;
 }
 
-arma::mat mes::Calc::getDndy (const arma::mat &JacInv, const arma::mat &dKsi, const arma::mat &dEta)
+arma::mat mes::Calc::getDndy(const arma::mat &JacInv, const arma::mat &dKsi, const arma::mat &dEta)
 {
 	arma::mat dndy;
 	for (int i = 0; i < 4; i++)
@@ -105,7 +105,7 @@ arma::mat mes::Calc::getLocalHMatrix(double k, const arma::dvec &x, const arma::
 		detJ.print("detJ:");
 	arma::mat JacInv;
 	JacInv = getJacInv(Jac, detJ);
-	if(debug)
+	if (debug)
 		JacInv.print("JacInv:");
 	arma::mat dKsi = getDNDKsi();
 	arma::mat dEta = getDNDEta();
@@ -172,14 +172,14 @@ arma::mat mes::Calc::getLocalCMatrix(const arma::dvec &x, const arma::dvec &y, d
 		JacInv.print("JacInv:");
 	arma::mat Ni;
 	for (int i = 0; i < 4; i++)
-		Ni.insert_rows(i, arma::drowvec{0.25*(1.0 - ksiCol[i])*(1.0 - etaCol[i]), 0.25*(1.0 + ksiCol[i])*(1.0 - etaCol[i]),
-			0.25*(1.0 + ksiCol[i])*(1.0 + etaCol[i]), 0.25*(1.0 - ksiCol[i])*(1.0 + etaCol[i])});
+		Ni.insert_rows(i, arma::drowvec{ 0.25*(1.0 - ksiCol[i])*(1.0 - etaCol[i]), 0.25*(1.0 + ksiCol[i])*(1.0 - etaCol[i]),
+			0.25*(1.0 + ksiCol[i])*(1.0 + etaCol[i]), 0.25*(1.0 - ksiCol[i])*(1.0 + etaCol[i]) });
 	if (debug)
 		Ni.print("Ni:");
 	arma::mat temp[4];
 	for (int i = 0; i < 4; i++)
 	{
-		temp[i] = Ni.col(i) * Ni.col(i).t()*detJ[i]*c*ro;
+		temp[i] = Ni.col(i) * Ni.col(i).t()*detJ[i] * c*ro;
 		if (debug)
 			temp[i].print("temp[" + std::to_string(i) + "]:");
 	}
@@ -208,17 +208,14 @@ arma::mat mes::Calc::getGlobalMatrix(Grid& grid, bool HorC, bool debug)
 	{
 		Element *e = grid.getElement(k);
 		arma::mat temp;
-		if (HorC)
-			temp = getLocalHMatrix(*e);
-		else
-			temp = getLocalCMatrix(grid, k);
+		temp = HorC ? getLocalHMatrix(*e, debug) : getLocalCMatrix(grid, k, debug);
 
-		if(debug && !(k % 100))
+		if (debug && !(k % 100))
 			std::cout << "inserting " << *e << " into (";
-		for(unsigned int i=0; i<temp.n_cols; i++)
+		for (unsigned int i = 0; i < temp.n_cols; i++)
 			for (unsigned int j = 0; j < temp.n_rows; j++)
 			{
-				res(e->getNodes().at(j)->index, e->getNodes().at(i)->index) = temp(i, j);
+				res(e->getNodes().at(j)->index, e->getNodes().at(i)->index) += HorC ? -temp(i, j) : temp(i, j);
 				if (debug && !(k % 100))
 					std::cout << e->getNodes().at(j)->index << ":" << e->getNodes().at(i)->index << ", ";
 			}

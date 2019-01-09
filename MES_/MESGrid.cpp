@@ -3,14 +3,14 @@
 #include <fstream>
 #include "MESGrid.h"
 
-mes::Grid::Grid(std::string filename)
+void mes::Grid::loadFromFile(std::string filename)
 {
 	std::fstream file;
 	file.open(filename, std::ios::in);
 	if (file.is_open())
 	{
 		std::string line = "";
-		double temperature = 0;
+		double temperature = 0, conduct=0;
 		do
 			std::getline(file, line);
 		while (line.empty() || line.at(0) == '#'); // read lines omitting empty ones and #comments
@@ -22,23 +22,27 @@ mes::Grid::Grid(std::string filename)
 		do
 			std::getline(file, line);
 		while (line.empty() || line.at(0) == '#');
-		gridWidth = std::stoul(line);
+		gridWidth = std::stod(line);
 		do
 			std::getline(file, line);
 		while (line.empty() || line.at(0) == '#');
-		gridHeight = std::stoul(line);
+		gridHeight = std::stod(line);
 		do
 			std::getline(file, line);
 		while (line.empty() || line.at(0) == '#');
-		n_cols = std::stoul(line);
+		n_cols = std::stod(line);
 		do
 			std::getline(file, line);
 		while (line.empty() || line.at(0) == '#');
-		n_rows = std::stoul(line);
+		n_rows = std::stod(line);
 		do
 			std::getline(file, line);
 		while (line.empty() || line.at(0) == '#');
-		temperature = std::stoul(line);
+		temperature = std::stod(line);
+		do
+			std::getline(file, line);
+		while (line.empty() || line.at(0) == '#');
+		conduct = std::stod(line);
 
 		// create nodes and elements from the data
 		for (unsigned int col = 0; col < n_cols; col++)
@@ -47,11 +51,17 @@ mes::Grid::Grid(std::string filename)
 		for (unsigned int col = 0; col < n_cols - 1; col++)
 			for (unsigned int row = 0; row < n_rows - 1; row++)
 				elements.emplace_back(&nodes.at((col*n_rows) + row), &nodes.at(((col + 1)*n_rows) + row + 1),
-					&nodes.at((col *n_rows) + 1 + row), &nodes.at(((col + 1)*n_rows) + row), col*(n_rows - 1) + row);
+					&nodes.at((col *n_rows) + 1 + row), &nodes.at(((col + 1)*n_rows) + row), col*(n_rows - 1) + row, conduct);
 	}
 	else
 		printf("Could not open source file\n");
 	file.close();
+}
+
+void mes::Grid::reset()
+{
+	nodes.clear();
+	elements.clear();
 }
 
 void mes::Grid::print(bool verbose)
