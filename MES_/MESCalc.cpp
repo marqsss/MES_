@@ -2,10 +2,10 @@
 #include <string>
 #include "MESCalc.h"
 
-double mes::Calc::ksi = 1.0 / sqrt(3);
-double mes::Calc::eta = 1.0 / sqrt(3);
-arma::dvec mes::Calc::ksiCol = { -1.0 / sqrt(3), 1.0 / sqrt(3), 1.0 / sqrt(3), -1.0 / sqrt(3) };
-arma::dvec mes::Calc::etaCol = { -1.0 / sqrt(3), -1.0 / sqrt(3), 1.0 / sqrt(3), 1.0 / sqrt(3) };
+const double mes::Calc::ksi = 1.0 / sqrt(3);
+const double mes::Calc::eta = 1.0 / sqrt(3);
+const arma::dvec mes::Calc::ksiCol = { -1.0 / sqrt(3), 1.0 / sqrt(3), 1.0 / sqrt(3), -1.0 / sqrt(3) };
+const arma::dvec mes::Calc::etaCol = { -1.0 / sqrt(3), -1.0 / sqrt(3), 1.0 / sqrt(3), 1.0 / sqrt(3) };
 
 //mes::Calc::Calc(Grid& GRID): grid(GRID)
 mes::Calc::Calc()
@@ -145,6 +145,8 @@ arma::mat mes::Calc::getLocalHMatrix(double k, const arma::dvec &x, const arma::
 arma::mat mes::Calc::getLocalHMatrix(Grid & GRID, unsigned int index, bool debug)
 {
 	Element *e = GRID.getElement(index);
+	if (debug)
+		std::cout << *e << std::endl;
 	arma::dvec x = { e->getNodes().at(0)->x , e->getNodes().at(1)->x , e->getNodes().at(2)->x , e->getNodes().at(3)->x };
 	arma::dvec y = { e->getNodes().at(0)->y , e->getNodes().at(1)->y , e->getNodes().at(2)->y , e->getNodes().at(3)->y };
 	return getLocalHMatrix(e->getConductivity(), x, y, debug);
@@ -198,7 +200,7 @@ arma::mat mes::Calc::getLocalCMatrix(Grid & GRID, unsigned int index, bool debug
 arma::mat mes::Calc::getGlobalMatrix(Grid& grid, bool HorC, bool debug)
 {
 	if (debug) // first and last element
-		std::cout << *grid.getElement(0) << std::endl << *grid.getElement(grid.getSize() - 1) << std::endl;
+		std::cout << *grid.getElement(0) << std::endl << *grid.getElement(static_cast<unsigned int>(grid.getSize()) - 1) << std::endl;
 	arma::mat res(grid.getCols() * grid.getRows(), grid.getCols() * grid.getRows(), arma::fill::zeros);
 	if (debug)
 		std::cout << sizeof(double) << "*" << res.size() << " = " << sizeof(double)*res.size() << "b = "
@@ -221,7 +223,7 @@ arma::mat mes::Calc::getGlobalMatrix(Grid& grid, bool HorC, bool debug)
 		for (unsigned int i = 0; i < temp.n_cols; i++)
 			for (unsigned int j = 0; j < temp.n_rows; j++)
 			{
-				res(e->getNodes().at(j)->index, e->getNodes().at(i)->index) += HorC ? -temp(i, j) : temp(i, j);
+				res(e->getNodes().at(j)->index, e->getNodes().at(i)->index) += HorC ? temp(i, j) : -temp(i, j);
 				if (debug && !(k % 100))
 					std::cout << e->getNodes().at(j)->index << ":" << e->getNodes().at(i)->index << ", ";
 			}
@@ -236,7 +238,7 @@ double mes::Calc::getMinTemp(Grid& grid)
 	std::vector<Node>& temp = grid.getNodes();
 	double res = temp.at(0).t;
 	for (unsigned int j = 1; j < temp.size(); j++)
-		if(res > temp.at(j).t)
+		if (res > temp.at(j).t)
 			res = temp.at(j).t;
 	return res;
 }
@@ -249,4 +251,70 @@ double mes::Calc::getMaxTemp(Grid& grid)
 		if (res < temp.at(j).t)
 			res = temp.at(j).t;
 	return res;
+}
+
+arma::mat mes::Calc::getHBCMatrix(Grid& grid, unsigned int index, bool debug)
+{
+	if (debug)
+		std::cout << *grid.getElement(index) << std::endl;
+	std::vector<Node*> n = grid.getElement(index)->getNodes();
+	arma::mat HBC(4, 4, arma::fill::zeros);
+	std::vector<arma::mat> PcMat(4);
+	for (int i = 0; i < 4; i++)
+		PcMat.at(i) = { 4, 4, arma::fill::zeros };
+
+	arma::mat Ni(2, 4, arma::fill::zeros);
+
+	for (int i = 0; i < PcMat.size(); i++)
+	{
+		arma::dvec ksi(2, arma::fill::zeros), eta(2, arma::fill::zeros), ones(2, arma::fill::ones);
+		if (i == 0) // bottom
+		{//-- +- ++ -+
+			ksi(0) -= ksi(1) = mes::Calc::ksi;
+			eta.fill(-1);
+		}
+		if (i == 1)
+		{
+			ksi.fill(1);
+			eta(0) -= eta(1) = mes::Calc::eta;
+		}
+		if (i == 2)
+		{
+			ksi(0) -= ksi(1) = -mes::Calc::ksi;
+			eta.fill(1);
+		}
+		if (i == 3)
+		{
+			ksi.fill(-1);
+			eta(0) -= eta(1) = -mes::Calc::eta;
+		}
+		Ni.col(0) = (ones - ksi) % (ones - eta);
+		Ni.col(1) = (ones + ksi) % (ones - eta);
+		Ni.col(2) = (ones + ksi) % (ones + eta);
+		Ni.col(3) = (ones - ksi) % (ones + eta);
+		Ni = Ni / 4.0;
+		if (debug)
+		{
+			Ni.print("Ni:");
+			((Ni.row(0).t() * Ni.row(0))*25).print("pc#1:");
+		}
+		PcMat.at(i) += (Ni.row(0).t() * Ni.row(0)*grid.getAlpha());
+		PcMat.at(i) += (Ni.row(1).t() * Ni.row(1)*grid.getAlpha());
+		double detJ = (sqrt(pow(abs(n.at(i)->x - n.at((i + 1) % 4)->x), 2) + 
+			pow(abs(n.at(i)->y - n.at((i + 1) % 4)->y), 2))) / 2.0;
+		PcMat.at(i) *= detJ;
+		if (debug)
+		{
+			std::cout << detJ << std::endl;
+			PcMat.at(i).print("PcMat:");
+		}
+
+		HBC += PcMat.at(i) * (static_cast<int>(grid.checkEdge(index) / pow(2, i)) % 2);
+	}
+	return HBC;
+}
+
+arma::dvec mes::Calc::getPVector(Grid& grid, bool debug)
+{
+	return arma::dvec();
 }

@@ -22,4 +22,4 @@
 # ambient temperature
 1200
 # alpha
-300
+25

@@ -10,10 +10,10 @@ namespace mes
 	public:
 		Calc();
 		//Calc(Grid& GRID);
-		static double ksi;
-		static double eta;
-		static arma::dvec etaCol;
-		static arma::dvec ksiCol;
+		static const double ksi;
+		static const double eta;
+		static const arma::dvec etaCol;
+		static const arma::dvec ksiCol;
 		arma::dvec transformKsiEta(const arma::dvec &pos);
 		arma::mat getDNDKsi();
 		arma::mat getDNDEta();
@@ -31,6 +31,8 @@ namespace mes
 		arma::mat getGlobalMatrix(Grid& grid, bool HorC = true, bool debug = false);
 		double getMinTemp(Grid& grid);
 		double getMaxTemp(Grid& grid);
+		arma::mat getHBCMatrix(Grid& grid, unsigned int index, bool debug = false);
+		arma::dvec getPVector(Grid& grid, bool debug = false);
 
 	private:
 		//mes::Grid& grid;

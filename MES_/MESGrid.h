@@ -10,6 +10,13 @@
 
 namespace mes
 {
+	enum Edge {
+		Bottom = 1,
+		Right,
+		Top,
+		Left
+	};
+
 	class Grid
 	{
 	public:
@@ -25,11 +32,14 @@ namespace mes
 		double getSpecificHeat() { return specific_heat; }
 		void setSpecificHeat(double C) { specific_heat = C; }
 		double getDensity() { return density; }
-		unsigned int getSize() { return elements.size(); }
+		size_t getSize() { return elements.size(); }
 		unsigned int getCols() { return n_cols; }
 		unsigned int getRows() { return n_rows; }
 		Element* getElement(unsigned int index) { return &(elements.at(index)); }
+		std::vector<Element>& getElements() { return elements; }
 		std::vector<Node>& getNodes() { return nodes; }
+		unsigned int checkEdge(unsigned int index);
+		double getAlpha() { return alpha; }
 
 	private:
 		std::vector<Node> nodes;

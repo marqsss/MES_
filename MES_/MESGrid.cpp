@@ -10,7 +10,7 @@ void mes::Grid::loadFromFile(std::string filename)
 	if (file.is_open())
 	{
 		std::string line = "";
-		double temperature = 0, conduct=0;
+		double temperature = 0, conduct = 0;
 		do
 			std::getline(file, line);
 		while (line.empty() || line.at(0) == '#'); // read lines omitting empty ones and #comments
@@ -66,8 +66,9 @@ void mes::Grid::loadFromFile(std::string filename)
 				nodes.emplace_back(col*(gridWidth / (n_cols - 1.0)), row*(gridHeight / (n_rows - 1.0)), col*n_rows + row, temperature);
 		for (unsigned int col = 0; col < n_cols - 1; col++)
 			for (unsigned int row = 0; row < n_rows - 1; row++)
-				elements.emplace_back(&nodes.at((col*n_rows) + row), &nodes.at(((col + 1)*n_rows) + row + 1),
-					&nodes.at((col *n_rows) + 1 + row), &nodes.at(((col + 1)*n_rows) + row), col*(n_rows - 1) + row, conduct);
+				elements.emplace_back(&nodes.at((col*n_rows) + row), &nodes.at(((col + 1)*n_rows) + row),
+					&nodes.at(((col + 1) *n_rows) + 1 + row), &nodes.at((col*n_rows) + row + 1),
+					col*(n_rows - 1) + row, conduct);
 	}
 	else
 		printf("Could not open source file\n");
@@ -104,4 +105,18 @@ void mes::Grid::print(bool verbose)
 		}
 		std::cout << "Element size is " << gridWidth / (n_cols - 1) << " x " << gridHeight / (n_rows - 1) << " units." << std::endl;
 	}
+}
+
+unsigned int mes::Grid::checkEdge(unsigned int i)
+{
+	unsigned int res = 0;
+	if (!(i % (getRows() - 1)))
+		res += Edge::Bottom;
+	if (i < getRows() - 1)
+		res += Edge::Left;
+	if (i > (getCols() - 2)*(getRows() - 1) - 1)
+		res += Edge::Right;
+	if (!((i + 1) % (getRows() - 1)))
+		res += Edge::Top;
+	return res;
 }

@@ -26,21 +26,12 @@ int main()
 			grid.loadFromFile("testGrid.txt");
 			grid.print();
 
-			temp = calc.getLocalHMatrix(grid, 0);
-			for (unsigned int i = 0; i < temp.n_cols; i++)
-			{
-				for (unsigned int j = 0; j < temp.n_rows; j++)
-				{
-					std::cout << "\t" << temp(i, j);
-				}
-				std::cout << std::endl;
-			}
-			temp.print("H:");
-			calc.getLocalCMatrix(grid, 0).print("Macierz C:");
+			calc.getLocalHMatrix(grid, 0).print("H:");
 
-			globH = calc.getGlobalMatrix(grid);
+			calc.getLocalCMatrix(grid, 0, true).print("Macierz C:");
 
-			globC = calc.getGlobalMatrix(grid, false);
+			calc.getHBCMatrix(grid, 24).print("Macierz HBC:");
+
 			break;
 		case 2:
 			grid.loadFromFile("TestCaseGrid.txt");
