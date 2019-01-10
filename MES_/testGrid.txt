@@ -4,9 +4,9 @@
 # density (ro)
 7800
 # width of grid in units (pixels)
-50
+0.5
 # height of grid in units (pixels)
-60
+0.6
 # number of Node columns
 21
 # number of Node rows
@@ -21,5 +21,5 @@
 50
 # ambient temperature
 1200
-# alpha
+# alpha - wspó³czynnik konwekcyjnej wymiany ciep³a
 25

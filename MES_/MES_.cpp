@@ -32,6 +32,8 @@ int main()
 
 			calc.getHBCMatrix(grid, 24).print("Macierz HBC:");
 
+			calc.getPVector(grid, 24, true).print("P vector:");
+
 			break;
 		case 2:
 			grid.loadFromFile("TestCaseGrid.txt");

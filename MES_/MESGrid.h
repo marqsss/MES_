@@ -39,6 +39,7 @@ namespace mes
 		std::vector<Element>& getElements() { return elements; }
 		std::vector<Node>& getNodes() { return nodes; }
 		unsigned int checkEdge(unsigned int index);
+		double getAmbientTemperature() { return ambientTemperature; }
 		double getAlpha() { return alpha; }
 
 	private:

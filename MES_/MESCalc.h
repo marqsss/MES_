@@ -32,7 +32,7 @@ namespace mes
 		double getMinTemp(Grid& grid);
 		double getMaxTemp(Grid& grid);
 		arma::mat getHBCMatrix(Grid& grid, unsigned int index, bool debug = false);
-		arma::dvec getPVector(Grid& grid, bool debug = false);
+		arma::dvec getPVector(Grid& grid, unsigned int index, bool debug = false);
 
 	private:
 		//mes::Grid& grid;

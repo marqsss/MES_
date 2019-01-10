@@ -162,13 +162,14 @@ arma::mat mes::Calc::getLocalHMatrix(Element& e, bool debug)
 
 arma::mat mes::Calc::getLocalCMatrix(const arma::dvec &x, const arma::dvec &y, double c, double ro, bool debug)
 {
-	arma::mat Jac, detJ, JacInv;
-	Jac = getJacobian(x, y);
+	arma::mat Jac = getJacobian(x, y);
 	if (debug)
 		Jac.print("Jac:");
+	arma::dvec detJ(4);
 	detJ = getDetJ(Jac);
 	if (debug)
-		detJ.print("deJ:");
+		detJ.print("detJ:");
+	arma::mat JacInv;
 	JacInv = getJacInv(Jac, detJ);
 	if (debug)
 		JacInv.print("JacInv:");
@@ -192,8 +193,8 @@ arma::mat mes::Calc::getLocalCMatrix(const arma::dvec &x, const arma::dvec &y, d
 arma::mat mes::Calc::getLocalCMatrix(Grid & GRID, unsigned int index, bool debug)
 {
 	Element *e = GRID.getElement(index);
-	arma::dvec y = { e->getNodes().at(0)->x , e->getNodes().at(1)->x , e->getNodes().at(2)->x , e->getNodes().at(3)->x };
-	arma::dvec x = { e->getNodes().at(0)->y , e->getNodes().at(1)->y , e->getNodes().at(2)->y , e->getNodes().at(3)->y };
+	arma::dvec x = { e->getNodes().at(0)->x , e->getNodes().at(1)->x , e->getNodes().at(2)->x , e->getNodes().at(3)->x };
+	arma::dvec y = { e->getNodes().at(0)->y , e->getNodes().at(1)->y , e->getNodes().at(2)->y , e->getNodes().at(3)->y };
 	return getLocalCMatrix(x, y, GRID.getSpecificHeat(), GRID.getDensity(), debug);
 }
 
@@ -265,10 +266,10 @@ arma::mat mes::Calc::getHBCMatrix(Grid& grid, unsigned int index, bool debug)
 
 	arma::mat Ni(2, 4, arma::fill::zeros);
 
-	for (int i = 0; i < PcMat.size(); i++)
+	for (unsigned int i = 0; i < PcMat.size(); i++)
 	{
 		arma::dvec ksi(2, arma::fill::zeros), eta(2, arma::fill::zeros), ones(2, arma::fill::ones);
-		if (i == 0) // bottom
+		if (i == 0) // "if segment" could be remade as a vector of 2x2 matrixes  
 		{//-- +- ++ -+
 			ksi(0) -= ksi(1) = mes::Calc::ksi;
 			eta.fill(-1);
@@ -288,6 +289,7 @@ arma::mat mes::Calc::getHBCMatrix(Grid& grid, unsigned int index, bool debug)
 			ksi.fill(-1);
 			eta(0) -= eta(1) = -mes::Calc::eta;
 		}
+		// filling Ni
 		Ni.col(0) = (ones - ksi) % (ones - eta);
 		Ni.col(1) = (ones + ksi) % (ones - eta);
 		Ni.col(2) = (ones + ksi) % (ones + eta);
@@ -296,11 +298,13 @@ arma::mat mes::Calc::getHBCMatrix(Grid& grid, unsigned int index, bool debug)
 		if (debug)
 		{
 			Ni.print("Ni:");
-			((Ni.row(0).t() * Ni.row(0))*25).print("pc#1:");
+			((Ni.row(0).t() * Ni.row(0)) * 25).print("pc#1:");
 		}
+		// filling PcMat
 		PcMat.at(i) += (Ni.row(0).t() * Ni.row(0)*grid.getAlpha());
 		PcMat.at(i) += (Ni.row(1).t() * Ni.row(1)*grid.getAlpha());
-		double detJ = (sqrt(pow(abs(n.at(i)->x - n.at((i + 1) % 4)->x), 2) + 
+		// detJ from local length
+		double detJ = (sqrt(pow(abs(n.at(i)->x - n.at((i + 1) % 4)->x), 2) +
 			pow(abs(n.at(i)->y - n.at((i + 1) % 4)->y), 2))) / 2.0;
 		PcMat.at(i) *= detJ;
 		if (debug)
@@ -308,13 +312,37 @@ arma::mat mes::Calc::getHBCMatrix(Grid& grid, unsigned int index, bool debug)
 			std::cout << detJ << std::endl;
 			PcMat.at(i).print("PcMat:");
 		}
-
+		// filling HBC
 		HBC += PcMat.at(i) * (static_cast<int>(grid.checkEdge(index) / pow(2, i)) % 2);
 	}
 	return HBC;
 }
 
-arma::dvec mes::Calc::getPVector(Grid& grid, bool debug)
+arma::dvec mes::Calc::getPVector(Grid& grid, unsigned int index, bool debug)
 {
-	return arma::dvec();
+	if (debug)
+		std::cout << *grid.getElement(index) << std::endl;
+	std::vector<Node*> n = grid.getElement(index)->getNodes();
+	arma::dvec P(4, arma::fill::zeros);
+
+	arma::dvec Ni(4, arma::fill::zeros);
+	arma::mat ksieta({ { -ksi, -1, ksi, -1 },
+						{ 1, -ksi, 1, ksi },
+						{ ksi, 1, -ksi, 1 },
+						{ -1, ksi, -1, -ksi } });
+
+	for (int i = 0; i < 4; i++)
+	{
+		// filling Ni
+		for (int j = 0; j < 4; j++)
+			Ni(j) = ((1 - ksieta.row(i)(0))*(1 - ksieta.row(i)(1)) + (1 - ksieta.row(i)(2))*(1 - ksieta.row(i)(3))) / 4.0;
+		if (debug)
+			Ni.print("Ni:");
+
+		for (unsigned int j = 0; j < n.size(); j++)
+			P(i) -= (static_cast<int>(grid.checkEdge(index) / pow(2, i)) % 2)*Ni(j)*grid.getAmbientTemperature()*grid.getAlpha();
+		if (debug)
+			P.print("partial P:");
+	}
+	return P;
 }
