@@ -9,7 +9,7 @@ namespace mes
 		H,
 		C,
 		HBC,
-		H_partial // bez warunkow brzegowych
+		H_central // bez warunkow brzegowych
 	};
 
 	class Calc
@@ -40,7 +40,9 @@ namespace mes
 		double getMaxTemp(Grid& grid);
 		arma::mat getHBCMatrix(Grid& grid, unsigned int index, bool debug = false);
 		arma::dvec getPVector(Grid& grid, unsigned int index, bool debug = false);
+		arma::dvec getGlobalPVector(Grid& grid, bool debug = false);
 		arma::mat getHCdTMatrix(Grid& grid, bool debug = false);
+		arma::dvec getTemperaturesVector(Grid& grid, bool debug = false);
 
 	private:
 		//mes::Grid& grid;

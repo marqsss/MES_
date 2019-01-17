@@ -44,7 +44,7 @@ int main()
 			
 			calc.getHCdTMatrix(grid).print("HCdT Matrix:");
 			std::cout << "Max temp: " << calc.getMaxTemp(grid) << ", min temp: " << calc.getMinTemp(grid) << std::endl;
-			calc.getPVector(grid, 3).print("P Vector:");
+			calc.getGlobalPVector(grid, true).print("P Vector:");
 
 			calc.getGlobalMatrix(grid, mes::HBC).print("HBC Matrix:");
 			break;

@@ -223,6 +223,9 @@ arma::mat mes::Calc::getGlobalMatrix(Grid& grid, MatrixType type, bool debug)
 		case 2:
 			temp = getHBCMatrix(grid, k, debug);
 			break;
+		case 3:
+			temp = getLocalHMatrix(*e, debug) - getHBCMatrix(grid, k, debug);
+			break;
 		default:
 			std::cout << "Error determining type of global matrix" << std::endl;
 			break;
@@ -231,7 +234,7 @@ arma::mat mes::Calc::getGlobalMatrix(Grid& grid, MatrixType type, bool debug)
 		if (debug)
 		{
 			std::string s = "Local matrix ";
-			s.append(type ? (type - 1) ? "HBC" : "C" : "H").append(" #").append(std::to_string(k)).append(":");
+			s.append(type ? (type - 1) ? (type - 2) ? "H_central" : "HBC" : "C" : "H").append(" #").append(std::to_string(k)).append(":");
 			temp.print(s);
 		}
 
@@ -282,7 +285,7 @@ arma::mat mes::Calc::getHBCMatrix(Grid& grid, unsigned int index, bool debug)
 
 	arma::mat Ni(2, 4, arma::fill::zeros);
 
-	for (unsigned int i = 0; i < PcMat.size(); i++)
+	for (unsigned int i = 0; i < PcMat.size(); i++) // for edge i
 	{
 		arma::dvec ksi(2, arma::fill::zeros), eta(2, arma::fill::zeros), ones(2, arma::fill::ones);
 		if (i == 0) // "if segment" could be remade as a vector of 2x2 matrixes  
@@ -346,7 +349,7 @@ arma::dvec mes::Calc::getPVector(Grid& grid, unsigned int index, bool debug)
 						{ 1, -ksi, 1, ksi },
 						{ ksi, 1, -ksi, 1 },
 						{ -1, ksi, -1, -ksi } });
-
+	//-12k, 6k, 0, -6k
 	for (int i = 0; i < 4; i++)
 	{
 		// filling Ni
@@ -358,12 +361,38 @@ arma::dvec mes::Calc::getPVector(Grid& grid, unsigned int index, bool debug)
 		for (unsigned int j = 0; j < n.size(); j++)
 			P(i) -= (static_cast<int>(grid.checkEdge(index) / pow(2, i)) % 2)*Ni(j)*grid.getAmbientTemperature()*grid.getAlpha();
 		if (debug)
-			P.print("partial P:");
+		{
+			std::string s = "Partial P # ";
+			s.append(std::to_string(i));
+			P.print(s);
+		}
 	}
+	if (debug)
+		P.print(std::string("Local P#").append(std::to_string(index)).append(":"));
 	return P;
+}
+
+arma::dvec mes::Calc::getGlobalPVector(Grid& grid, bool debug)
+{
+	arma::dvec res(grid.getNodes().size(), arma::fill::zeros);
+	std::vector<Element>& e = grid.getElements();
+	for (unsigned int i = 0; i < grid.getSize(); i++)
+	{
+		arma::dvec temp = getPVector(grid, i, debug);
+		std::vector<Node*> n = grid.getElement(i)->getNodes();
+		for (unsigned int k = 0; k < 4; k++)
+			res(n.at(k)->index) += temp(k);
+	}
+	return res+getGlobalMatrix(grid, mes::C)/grid.getDeltaTau()*getTemperaturesVector(grid, debug);
 }
 
 arma::mat mes::Calc::getHCdTMatrix(Grid& grid, bool debug)
 {
-	return getGlobalMatrix(grid, mes::H, debug)+getGlobalMatrix(grid, mes::C, debug) / grid.getDeltaTau();
+	return getGlobalMatrix(grid, mes::HBC, debug)+getGlobalMatrix(grid, mes::C, debug) / grid.getDeltaTau();
+}
+
+arma::dvec mes::Calc::getTemperaturesVector(Grid& grid, bool debug)
+{
+	arma::dvec res(grid.getNodes().size(), arma::fill::zeros);
+	return res;
 }
