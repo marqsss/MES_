@@ -5,6 +5,13 @@
 
 namespace mes
 {
+	enum MatrixType {
+		H,
+		C,
+		HBC,
+		H_partial // bez warunkow brzegowych
+	};
+
 	class Calc
 	{
 	public:
@@ -28,11 +35,12 @@ namespace mes
 		arma::mat getLocalCMatrix(const arma::dvec &x, const arma::dvec &y, double c, double ro, bool debug = false);
 		arma::mat getLocalCMatrix(Grid& GRID, unsigned int index, bool debug = false);
 		// HorC: true for H_matrix, false for C_matrix; default true
-		arma::mat getGlobalMatrix(Grid& grid, bool HorC = true, bool debug = false);
+		arma::mat getGlobalMatrix(Grid& grid, MatrixType type, bool debug = false);
 		double getMinTemp(Grid& grid);
 		double getMaxTemp(Grid& grid);
 		arma::mat getHBCMatrix(Grid& grid, unsigned int index, bool debug = false);
 		arma::dvec getPVector(Grid& grid, unsigned int index, bool debug = false);
+		arma::mat getHCdTMatrix(Grid& grid, bool debug = false);
 
 	private:
 		//mes::Grid& grid;

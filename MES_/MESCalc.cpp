@@ -198,7 +198,7 @@ arma::mat mes::Calc::getLocalCMatrix(Grid & GRID, unsigned int index, bool debug
 	return getLocalCMatrix(x, y, GRID.getSpecificHeat(), GRID.getDensity(), debug);
 }
 
-arma::mat mes::Calc::getGlobalMatrix(Grid& grid, bool HorC, bool debug)
+arma::mat mes::Calc::getGlobalMatrix(Grid& grid, MatrixType type, bool debug)
 {
 	if (debug) // first and last element
 		std::cout << *grid.getElement(0) << std::endl << *grid.getElement(static_cast<unsigned int>(grid.getSize()) - 1) << std::endl;
@@ -211,20 +211,36 @@ arma::mat mes::Calc::getGlobalMatrix(Grid& grid, bool HorC, bool debug)
 	{
 		Element *e = grid.getElement(k);
 		arma::mat temp;
-		temp = HorC ? getLocalHMatrix(*e, debug) : getLocalCMatrix(grid, k, debug);
+
+		switch (type)
+		{
+		case 0:
+			temp = getLocalHMatrix(*e, debug);
+			break;
+		case 1:
+			temp = getLocalCMatrix(grid, k, debug);
+			break;
+		case 2:
+			temp = getHBCMatrix(grid, k, debug);
+			break;
+		default:
+			std::cout << "Error determining type of global matrix" << std::endl;
+			break;
+		}
+
 		if (debug)
 		{
 			std::string s = "Local matrix ";
-			s.append(HorC ? "H" : "C").append(" #").append(std::to_string(k)).append(":");
+			s.append(type ? (type - 1) ? "HBC" : "C" : "H").append(" #").append(std::to_string(k)).append(":");
 			temp.print(s);
 		}
 
-		if (debug && !(k % 100))
+		if (debug && !(k % grid.getSize()/10))
 			std::cout << "inserting " << *e << " into (";
 		for (unsigned int i = 0; i < temp.n_cols; i++)
 			for (unsigned int j = 0; j < temp.n_rows; j++)
 			{
-				res(e->getNodes().at(j)->index, e->getNodes().at(i)->index) += HorC ? temp(i, j) : -temp(i, j);
+				res(e->getNodes().at(j)->index, e->getNodes().at(i)->index) += temp(i, j);
 				if (debug && !(k % 100))
 					std::cout << e->getNodes().at(j)->index << ":" << e->getNodes().at(i)->index << ", ";
 			}
@@ -345,4 +361,9 @@ arma::dvec mes::Calc::getPVector(Grid& grid, unsigned int index, bool debug)
 			P.print("partial P:");
 	}
 	return P;
+}
+
+arma::mat mes::Calc::getHCdTMatrix(Grid& grid, bool debug)
+{
+	return getGlobalMatrix(grid, mes::H, debug)+getGlobalMatrix(grid, mes::C, debug) / grid.getDeltaTau();
 }

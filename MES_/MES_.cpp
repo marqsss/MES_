@@ -38,12 +38,15 @@ int main()
 		case 2:
 			grid.loadFromFile("TestCaseGrid.txt");
 			grid.print();
-			globH = calc.getGlobalMatrix(grid, true);
-			globH.print("Global H:");
-
-			globC = calc.getGlobalMatrix(grid, false);
-			globC.print("Global C:");
+			
+			calc.getGlobalMatrix(grid, mes::H).print("Global H:");
+			calc.getGlobalMatrix(grid, mes::C).print("Global C:");
+			
+			calc.getHCdTMatrix(grid).print("HCdT Matrix:");
 			std::cout << "Max temp: " << calc.getMaxTemp(grid) << ", min temp: " << calc.getMinTemp(grid) << std::endl;
+			calc.getPVector(grid, 3).print("P Vector:");
+
+			calc.getGlobalMatrix(grid, mes::HBC).print("HBC Matrix:");
 			break;
 		}
 	}

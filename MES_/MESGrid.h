@@ -41,6 +41,7 @@ namespace mes
 		unsigned int checkEdge(unsigned int index);
 		double getAmbientTemperature() { return ambientTemperature; }
 		double getAlpha() { return alpha; }
+		double getDeltaTau() { return timeStep; }
 
 	private:
 		std::vector<Node> nodes;
