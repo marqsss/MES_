@@ -41,12 +41,19 @@ int main()
 			
 			calc.getGlobalMatrix(grid, mes::H).print("Global H:");
 			calc.getGlobalMatrix(grid, mes::C).print("Global C:");
-			
-			calc.getHCdTMatrix(grid).print("HCdT Matrix:");
-			std::cout << "Max temp: " << calc.getMaxTemp(grid) << ", min temp: " << calc.getMinTemp(grid) << std::endl;
-			calc.getGlobalPVector(grid, true).print("P Vector:");
+			calc.getHBCMatrix(grid, 0).print("Local HBC:");
 
-			calc.getGlobalMatrix(grid, mes::HBC).print("HBC Matrix:");
+			calc.getHCdTMatrix(grid).print("HCdT Matrix:");
+			(calc.getGlobalMatrix(grid, mes::H) + calc.getGlobalMatrix(grid, mes::C) / grid.getDeltaTau()).print("HCdT:");
+			std::cout << "Max temp: " << calc.getMaxTemp(grid) << ", min temp: " << calc.getMinTemp(grid) << std::endl;
+			//calc.getGlobalPVector(grid, true).print("P Vector:");
+
+			//calc.getGlobalMatrix(grid, mes::HBC).print("HBC Matrix:");
+
+			//calc.getGlobalPVector(grid).print("G P:");
+			//calc.dummy(grid, 0);
+
+			//calc.dummy2(grid, 0);
 			break;
 		}
 	}

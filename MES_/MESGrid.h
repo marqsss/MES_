@@ -42,6 +42,7 @@ namespace mes
 		double getAmbientTemperature() { return ambientTemperature; }
 		double getAlpha() { return alpha; }
 		double getDeltaTau() { return timeStep; }
+		double getConductivity() { return getElement(0)->getConductivity(); }
 
 	private:
 		std::vector<Node> nodes;

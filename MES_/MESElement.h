@@ -16,8 +16,8 @@ namespace mes
 		unsigned int getIndex() { return index; }
 		friend std::ostream& operator<<(std::ostream& s, Element e)
 		{
-			s << "#" << e.index << " \t(" << e.nodes.at(0)->index << ", " << e.nodes.at(1)->index << ", "
-				<< e.nodes.at(2)->index << ", " << e.nodes.at(3)->index << " @ " << e.conductivity << ")";
+			s << "e#" << e.index << " \t(" << *e.nodes.at(0) << ", " << *e.nodes.at(1) << ", "
+				<< *e.nodes.at(2) << ", " << *e.nodes.at(3) << " @ " << e.conductivity << ")";
 			return s;
 		}
 	private:

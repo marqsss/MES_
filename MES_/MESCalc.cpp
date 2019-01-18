@@ -214,17 +214,17 @@ arma::mat mes::Calc::getGlobalMatrix(Grid& grid, MatrixType type, bool debug)
 
 		switch (type)
 		{
-		case 0:
+		case mes::H:
 			temp = getLocalHMatrix(*e, debug);
 			break;
-		case 1:
+		case mes::C:
 			temp = getLocalCMatrix(grid, k, debug);
 			break;
-		case 2:
+		case mes::HBC:
 			temp = getHBCMatrix(grid, k, debug);
 			break;
-		case 3:
-			temp = getLocalHMatrix(*e, debug) - getHBCMatrix(grid, k, debug);
+		case mes::H_central:
+			temp = getLocalHMatrix(*e, debug) + getHBCMatrix(grid, k, debug);
 			break;
 		default:
 			std::cout << "Error determining type of global matrix" << std::endl;
@@ -238,7 +238,7 @@ arma::mat mes::Calc::getGlobalMatrix(Grid& grid, MatrixType type, bool debug)
 			temp.print(s);
 		}
 
-		if (debug && !(k % grid.getSize()/10))
+		if (debug && !(k % grid.getSize() / 10))
 			std::cout << "inserting " << *e << " into (";
 		for (unsigned int i = 0; i < temp.n_cols; i++)
 			for (unsigned int j = 0; j < temp.n_rows; j++)
@@ -317,7 +317,9 @@ arma::mat mes::Calc::getHBCMatrix(Grid& grid, unsigned int index, bool debug)
 		if (debug)
 		{
 			Ni.print("Ni:");
-			((Ni.row(0).t() * Ni.row(0)) * 25).print("pc#1:");
+			(Ni.row(0).t() * Ni.row(0)*grid.getAlpha()).print("pc#1:");
+			(Ni.row(1).t() * Ni.row(1)*grid.getAlpha()).print("pc#2:");
+
 		}
 		// filling PcMat
 		PcMat.at(i) += (Ni.row(0).t() * Ni.row(0)*grid.getAlpha());
@@ -349,12 +351,14 @@ arma::dvec mes::Calc::getPVector(Grid& grid, unsigned int index, bool debug)
 						{ 1, -ksi, 1, ksi },
 						{ ksi, 1, -ksi, 1 },
 						{ -1, ksi, -1, -ksi } });
-	//-12k, 6k, 0, -6k
+
 	for (int i = 0; i < 4; i++)
 	{
 		// filling Ni
-		for (int j = 0; j < 4; j++)
-			Ni(j) = ((1 - ksieta.row(i)(0))*(1 - ksieta.row(i)(1)) + (1 - ksieta.row(i)(2))*(1 - ksieta.row(i)(3))) / 4.0;
+		Ni(0) = ((1 - ksieta.row(i)(0))*(1 - ksieta.row(i)(1)) + (1 - ksieta.row(i)(2))*(1 - ksieta.row(i)(3))) / 4.0;
+		Ni(1) = ((1 + ksieta.row(i)(0))*(1 - ksieta.row(i)(1)) + (1 + ksieta.row(i)(2))*(1 - ksieta.row(i)(3))) / 4.0;
+		Ni(2) = ((1 + ksieta.row(i)(0))*(1 + ksieta.row(i)(1)) + (1 + ksieta.row(i)(2))*(1 + ksieta.row(i)(3))) / 4.0;
+		Ni(3) = ((1 - ksieta.row(i)(0))*(1 + ksieta.row(i)(1)) + (1 - ksieta.row(i)(2))*(1 + ksieta.row(i)(3))) / 4.0;
 		if (debug)
 			Ni.print("Ni:");
 
@@ -383,16 +387,111 @@ arma::dvec mes::Calc::getGlobalPVector(Grid& grid, bool debug)
 		for (unsigned int k = 0; k < 4; k++)
 			res(n.at(k)->index) += temp(k);
 	}
-	return res+getGlobalMatrix(grid, mes::C)/grid.getDeltaTau()*getTemperaturesVector(grid, debug);
+	return res + getGlobalMatrix(grid, mes::C) / grid.getDeltaTau()*getTemperaturesVector(grid, debug);
 }
 
 arma::mat mes::Calc::getHCdTMatrix(Grid& grid, bool debug)
 {
-	return getGlobalMatrix(grid, mes::HBC, debug)+getGlobalMatrix(grid, mes::C, debug) / grid.getDeltaTau();
+	return getGlobalMatrix(grid, mes::H_central, debug) + getGlobalMatrix(grid, mes::C, debug) / grid.getDeltaTau();
 }
 
 arma::dvec mes::Calc::getTemperaturesVector(Grid& grid, bool debug)
 {
 	arma::dvec res(grid.getNodes().size(), arma::fill::zeros);
 	return res;
+}
+
+void mes::Calc::dummy(Grid& grid, unsigned int index)
+{
+	std::cout << *grid.getElement(index) << std::endl;
+
+	double temp[4] = { 0, 0, 0, 0 };
+	double length[4] = { 0, 0, 0, 0 };
+	double detJ[4] = { 0, 0, 0, 0 };
+	double P[4] = { 0, 0, 0, 0 };
+
+	double PowPc[4][2][2] =
+	{
+		{ {-eta,-1 },{eta,-1 } },
+		{ {1,-eta },{1,eta } },
+		{ {eta,1 },{-eta,1 } },
+		{ {-1,eta },{-1,-eta } }
+	};
+
+	std::vector<Node*> nodess = grid.getElement(index)->getNodes();
+	length[0] = sqrt(pow(nodess.at(1)->x - nodess.at(0)->x, 2) + pow(nodess.at(1)->y - nodess.at(0)->y, 2));
+	length[1] = sqrt(pow(nodess.at(1)->x - nodess.at(2)->x, 2) + pow(nodess.at(1)->y - nodess.at(2)->y, 2));
+	length[2] = sqrt(pow(nodess.at(2)->x - nodess.at(3)->x, 2) + pow(nodess.at(2)->y - nodess.at(3)->y, 2));
+	length[3] = sqrt(pow(nodess.at(0)->x - nodess.at(3)->x, 2) + pow(nodess.at(0)->y - nodess.at(3)->y, 2));
+
+	for (int i = 0; i < 4; i++)
+	{
+		detJ[i] = length[i] / 2;
+	}
+
+	for (int i = 0; i < 4; i++)
+	{
+		temp[0] = N1(PowPc[i][0][0], PowPc[i][0][1]) + N1(PowPc[i][1][0], PowPc[i][1][1]);
+		temp[1] = N2(PowPc[i][0][0], PowPc[i][0][1]) + N2(PowPc[i][1][0], PowPc[i][1][1]);
+		temp[2] = N3(PowPc[i][0][0], PowPc[i][0][1]) + N3(PowPc[i][1][0], PowPc[i][1][1]);
+		temp[3] = N4(PowPc[i][0][0], PowPc[i][0][1]) + N4(PowPc[i][1][0], PowPc[i][1][1]);
+
+		for (int j = 0; j < 4; j++)
+		{
+			P[i] -= (static_cast<int>(grid.checkEdge(index) / pow(2, i)) % 2) * temp[j]
+				* grid.getAmbientTemperature() * grid.getAlpha();
+		}	//-12k, 6k, 0, -6k
+	}
+}
+
+void mes::Calc::dummy2(Grid& grid, unsigned int index)
+{
+	double temp1[4] = { 0, 0, 0, 0 };
+	double temp2[4] = { 0, 0, 0, 0 };
+	double length[4] = { 0, 0, 0, 0 };
+	double detJ[4] = { 0, 0, 0, 0 };
+
+	double sum[4][4][4];
+	double IntegrationPoints[4][2][2]=
+	{
+		{ {-eta,-1 },{eta,-1 } },
+		{ {1,-eta },{1,eta } },
+		{ {eta,1 },{-eta,1 } },
+		{ {-1,eta },{-1,-eta } }
+	};
+
+	std::vector<Node*> nodess = grid.getElement(index)->getNodes();
+	length[0] = sqrt(pow(nodess.at(1)->x - nodess.at(0)->x, 2) + pow(nodess.at(1)->y - nodess.at(0)->y, 2));
+	length[1] = sqrt(pow(nodess.at(1)->x - nodess.at(2)->x, 2) + pow(nodess.at(1)->y - nodess.at(2)->y, 2));
+	length[2] = sqrt(pow(nodess.at(2)->x - nodess.at(3)->x, 2) + pow(nodess.at(2)->y - nodess.at(3)->y, 2));
+	length[3] = sqrt(pow(nodess.at(0)->x - nodess.at(3)->x, 2) + pow(nodess.at(0)->y - nodess.at(3)->y, 2));
+
+	for (int i = 0; i < 4; i++) {
+		detJ[i] = length[i] / 2;
+	}
+
+	double HBC[4][4] = { 0, 0, 0, 0 };
+
+	for (int i = 0; i < 4; i++)
+	{
+		temp1[0] = N1(IntegrationPoints[i][0][0], IntegrationPoints[i][0][1]);
+		temp1[1] = N2(IntegrationPoints[i][0][0], IntegrationPoints[i][0][1]);
+		temp1[2] = N3(IntegrationPoints[i][0][0], IntegrationPoints[i][0][1]);
+		temp1[3] = N4(IntegrationPoints[i][0][0], IntegrationPoints[i][0][1]);
+
+		temp2[0] = N1(IntegrationPoints[i][1][0], IntegrationPoints[i][1][1]);
+		temp2[1] = N2(IntegrationPoints[i][1][0], IntegrationPoints[i][1][1]);
+		temp2[2] = N3(IntegrationPoints[i][1][0], IntegrationPoints[i][1][1]);
+		temp2[3] = N4(IntegrationPoints[i][1][0], IntegrationPoints[i][1][1]);
+
+		for (int j = 0; j < 4; j++)
+		{
+			for (int k = 0; k < 4; k++)
+			{
+				sum[i][j][k] = ((grid.getAlpha() * temp1[j] * temp1[k]) + 
+					(grid.getAlpha() * temp2[j] * temp2[k])) * detJ[i];
+				HBC[j][k] += (static_cast<int>(grid.checkEdge(index) / pow(2, i)) % 2) * sum[i][j][k];
+			}
+		}
+	}
 }
