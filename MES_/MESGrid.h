@@ -12,9 +12,9 @@ namespace mes
 {
 	enum Edge {
 		Bottom = 1,
-		Right,
-		Top,
-		Left
+		Right=2,
+		Top=4,
+		Left=8
 	};
 
 	class Grid
@@ -38,6 +38,7 @@ namespace mes
 		Element* getElement(unsigned int index) { return &(elements.at(index)); }
 		std::vector<Element>& getElements() { return elements; }
 		std::vector<Node>& getNodes() { return nodes; }
+		Node* getNode(unsigned int index) { return &nodes.at(index); }
 		unsigned int checkEdge(unsigned int index);
 		double getAmbientTemperature() { return ambientTemperature; }
 		double getAlpha() { return alpha; }

@@ -43,7 +43,7 @@ namespace mes
 		arma::dvec getGlobalPVector(Grid& grid, bool debug = false);
 		arma::mat getHCdTMatrix(Grid& grid, bool debug = false);
 		arma::dvec getTemperaturesVector(Grid& grid, bool debug = false);
-		void dummy(Grid& grid, unsigned int index);
+		arma::dvec dummy(Grid& grid, unsigned int index);
 		void dummy2(Grid& grid, unsigned int index);
 
 		double N1(double a, double b) { return 0.25*((1 - a)*(1 - b)); }

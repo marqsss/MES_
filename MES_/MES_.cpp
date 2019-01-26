@@ -38,22 +38,21 @@ int main()
 		case 2:
 			grid.loadFromFile("TestCaseGrid.txt");
 			grid.print();
-			
+
 			calc.getGlobalMatrix(grid, mes::H).print("Global H:");
 			calc.getGlobalMatrix(grid, mes::C).print("Global C:");
-			calc.getHBCMatrix(grid, 0).print("Local HBC:");
-
 			calc.getHCdTMatrix(grid).print("HCdT Matrix:");
-			(calc.getGlobalMatrix(grid, mes::H) + calc.getGlobalMatrix(grid, mes::C) / grid.getDeltaTau()).print("HCdT:");
 			std::cout << "Max temp: " << calc.getMaxTemp(grid) << ", min temp: " << calc.getMinTemp(grid) << std::endl;
-			//calc.getGlobalPVector(grid, true).print("P Vector:");
-
-			//calc.getGlobalMatrix(grid, mes::HBC).print("HBC Matrix:");
-
-			//calc.getGlobalPVector(grid).print("G P:");
-			//calc.dummy(grid, 0);
-
-			//calc.dummy2(grid, 0);
+			arma::dvec globP = calc.getGlobalPVector(grid);
+			globP.print("P Vector:");
+			/*
+			arma::mat temp = (1.0 / calc.getHCdTMatrix(grid));
+			temp.replace(arma::datum::inf, 0);
+			temp = temp * globP;
+			temp.print("1/HCdT:");
+			
+			arma::dvec Tvec = (1.0/calc.getHCdTMatrix(grid))*globP;
+			Tvec.print("Tvec:");*/
 			break;
 		}
 	}

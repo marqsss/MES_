@@ -341,16 +341,29 @@ arma::mat mes::Calc::getHBCMatrix(Grid& grid, unsigned int index, bool debug)
 
 arma::dvec mes::Calc::getPVector(Grid& grid, unsigned int index, bool debug)
 {
+	Element *e = grid.getElement(index);
 	if (debug)
-		std::cout << *grid.getElement(index) << std::endl;
-	std::vector<Node*> n = grid.getElement(index)->getNodes();
+		std::cout << *e << std::endl;
+	std::vector<Node*> n = e->getNodes();
 	arma::dvec P(4, arma::fill::zeros);
 
 	arma::dvec Ni(4, arma::fill::zeros);
-	arma::mat ksieta({ { -ksi, -1, ksi, -1 },
-						{ 1, -ksi, 1, ksi },
-						{ ksi, 1, -ksi, 1 },
-						{ -1, ksi, -1, -ksi } });
+	arma::mat ksieta({ 
+		{ -ksi, -1, ksi, -1 },
+		{ 1, -ksi, 1, ksi },
+		{ ksi, 1, -ksi, 1 },
+		{ -1, ksi, -1, -ksi } 
+	});
+
+	double length[4] = { 0, 0, 0, 0 };
+	double detJ[4] = { 0, 0, 0, 0 };
+	std::vector<Node*> nodess = grid.getElement(index)->getNodes();
+	length[0] = sqrt(pow(nodess.at(1)->x - nodess.at(0)->x, 2) + pow(nodess.at(1)->y - nodess.at(0)->y, 2));
+	length[1] = sqrt(pow(nodess.at(1)->x - nodess.at(2)->x, 2) + pow(nodess.at(1)->y - nodess.at(2)->y, 2));
+	length[2] = sqrt(pow(nodess.at(2)->x - nodess.at(3)->x, 2) + pow(nodess.at(2)->y - nodess.at(3)->y, 2));
+	length[3] = sqrt(pow(nodess.at(0)->x - nodess.at(3)->x, 2) + pow(nodess.at(0)->y - nodess.at(3)->y, 2));
+	for (int i = 0; i < 4; i++)
+		detJ[i] = length[i] / 2;
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -363,7 +376,7 @@ arma::dvec mes::Calc::getPVector(Grid& grid, unsigned int index, bool debug)
 			Ni.print("Ni:");
 
 		for (unsigned int j = 0; j < n.size(); j++)
-			P(i) -= (static_cast<int>(grid.checkEdge(index) / pow(2, i)) % 2)*Ni(j)*grid.getAmbientTemperature()*grid.getAlpha();
+			P(i) -= (static_cast<int>(grid.checkEdge(index) / pow(2, i)) % 2)*Ni(j)*grid.getAmbientTemperature()*grid.getAlpha()*detJ[j];
 		if (debug)
 		{
 			std::string s = "Partial P # ";
@@ -382,12 +395,12 @@ arma::dvec mes::Calc::getGlobalPVector(Grid& grid, bool debug)
 	std::vector<Element>& e = grid.getElements();
 	for (unsigned int i = 0; i < grid.getSize(); i++)
 	{
-		arma::dvec temp = getPVector(grid, i, debug);
+		arma::dvec temp = getPVector(grid, i); // localP
 		std::vector<Node*> n = grid.getElement(i)->getNodes();
 		for (unsigned int k = 0; k < 4; k++)
-			res(n.at(k)->index) += temp(k);
+			res(n.at(k)->index) -= temp(k);
 	}
-	return res + getGlobalMatrix(grid, mes::C) / grid.getDeltaTau()*getTemperaturesVector(grid, debug);
+	return res + ((getGlobalMatrix(grid, mes::C) / grid.getDeltaTau())*getTemperaturesVector(grid, debug));
 }
 
 arma::mat mes::Calc::getHCdTMatrix(Grid& grid, bool debug)
@@ -398,10 +411,12 @@ arma::mat mes::Calc::getHCdTMatrix(Grid& grid, bool debug)
 arma::dvec mes::Calc::getTemperaturesVector(Grid& grid, bool debug)
 {
 	arma::dvec res(grid.getNodes().size(), arma::fill::zeros);
+	for (unsigned int i = 0; i < grid.getNodes().size(); i++)
+		res(i) = grid.getNode(i)->t;
 	return res;
 }
 
-void mes::Calc::dummy(Grid& grid, unsigned int index)
+arma::dvec mes::Calc::dummy(Grid& grid, unsigned int index) // Pvec
 {
 	std::cout << *grid.getElement(index) << std::endl;
 
@@ -410,12 +425,12 @@ void mes::Calc::dummy(Grid& grid, unsigned int index)
 	double detJ[4] = { 0, 0, 0, 0 };
 	double P[4] = { 0, 0, 0, 0 };
 
-	double PowPc[4][2][2] =
+	double PowPc[4][4] =
 	{
-		{ {-eta,-1 },{eta,-1 } },
-		{ {1,-eta },{1,eta } },
-		{ {eta,1 },{-eta,1 } },
-		{ {-1,eta },{-1,-eta } }
+		{-eta, -1, eta, -1},
+		{1, -eta, 1, eta},
+		{eta, 1, -eta, 1},
+		{-1, eta, -1, -eta}
 	};
 
 	std::vector<Node*> nodess = grid.getElement(index)->getNodes();
@@ -425,23 +440,23 @@ void mes::Calc::dummy(Grid& grid, unsigned int index)
 	length[3] = sqrt(pow(nodess.at(0)->x - nodess.at(3)->x, 2) + pow(nodess.at(0)->y - nodess.at(3)->y, 2));
 
 	for (int i = 0; i < 4; i++)
-	{
 		detJ[i] = length[i] / 2;
-	}
 
 	for (int i = 0; i < 4; i++)
 	{
-		temp[0] = N1(PowPc[i][0][0], PowPc[i][0][1]) + N1(PowPc[i][1][0], PowPc[i][1][1]);
-		temp[1] = N2(PowPc[i][0][0], PowPc[i][0][1]) + N2(PowPc[i][1][0], PowPc[i][1][1]);
-		temp[2] = N3(PowPc[i][0][0], PowPc[i][0][1]) + N3(PowPc[i][1][0], PowPc[i][1][1]);
-		temp[3] = N4(PowPc[i][0][0], PowPc[i][0][1]) + N4(PowPc[i][1][0], PowPc[i][1][1]);
+		temp[0] = N1(PowPc[i][0], PowPc[i][1]) + N1(PowPc[i][2], PowPc[i][3]);
+		temp[1] = N2(PowPc[i][0], PowPc[i][1]) + N2(PowPc[i][2], PowPc[i][3]);
+		temp[2] = N3(PowPc[i][0], PowPc[i][1]) + N3(PowPc[i][2], PowPc[i][3]);
+		temp[3] = N4(PowPc[i][0], PowPc[i][1]) + N4(PowPc[i][2], PowPc[i][3]);
 
 		for (int j = 0; j < 4; j++)
 		{
-			P[i] -= (static_cast<int>(grid.checkEdge(index) / pow(2, i)) % 2) * temp[j]
-				* grid.getAmbientTemperature() * grid.getAlpha();
+			P[i] -= (static_cast<int>(grid.checkEdge(index) / pow(2, j)) % 2) * temp[j]
+				* grid.getAmbientTemperature() * grid.getAlpha()*detJ[j];
 		}	//-12k, 6k, 0, -6k
 	}
+	arma::dvec res = { P[0], P[1], P[2], P[3] };
+	return res;
 }
 
 void mes::Calc::dummy2(Grid& grid, unsigned int index)
@@ -452,7 +467,7 @@ void mes::Calc::dummy2(Grid& grid, unsigned int index)
 	double detJ[4] = { 0, 0, 0, 0 };
 
 	double sum[4][4][4];
-	double IntegrationPoints[4][2][2]=
+	double IntegrationPoints[4][2][2] =
 	{
 		{ {-eta,-1 },{eta,-1 } },
 		{ {1,-eta },{1,eta } },
@@ -488,7 +503,7 @@ void mes::Calc::dummy2(Grid& grid, unsigned int index)
 		{
 			for (int k = 0; k < 4; k++)
 			{
-				sum[i][j][k] = ((grid.getAlpha() * temp1[j] * temp1[k]) + 
+				sum[i][j][k] = ((grid.getAlpha() * temp1[j] * temp1[k]) +
 					(grid.getAlpha() * temp2[j] * temp2[k])) * detJ[i];
 				HBC[j][k] += (static_cast<int>(grid.checkEdge(index) / pow(2, i)) % 2) * sum[i][j][k];
 			}
