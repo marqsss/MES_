@@ -36,8 +36,6 @@ namespace mes
 		arma::mat getLocalCMatrix(Grid& GRID, unsigned int index, bool debug = false);
 		// HorC: true for H_matrix, false for C_matrix; default true
 		arma::mat getGlobalMatrix(Grid& grid, MatrixType type, bool debug = false);
-		double getMinTemp(Grid& grid);
-		double getMaxTemp(Grid& grid);
 		arma::mat getHBCMatrix(Grid& grid, unsigned int index, bool debug = false);
 		arma::dvec getPVector(Grid& grid, unsigned int index, bool debug = false);
 		arma::dvec getGlobalPVector(Grid& grid, bool debug = false);
@@ -45,6 +43,10 @@ namespace mes
 		arma::dvec getTemperaturesVector(Grid& grid, bool debug = false);
 		arma::dvec dummy(Grid& grid, unsigned int index);
 		void dummy2(Grid& grid, unsigned int index);
+		arma::dvec gauss(Grid& grid, bool debug = false);
+		void applyGauss(Grid& grid, unsigned int iterations=1, bool debug = false);
+		void printExtremeTemp(Grid& grid, unsigned int iterations = 0);
+
 
 		double N1(double a, double b) { return 0.25*((1 - a)*(1 - b)); }
 		double N2(double a, double b) { return 0.25*((1 + a)*(1 - b)); }

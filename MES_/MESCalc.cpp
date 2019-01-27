@@ -253,26 +253,6 @@ arma::mat mes::Calc::getGlobalMatrix(Grid& grid, MatrixType type, bool debug)
 	return res;
 }
 
-double mes::Calc::getMinTemp(Grid& grid)
-{
-	std::vector<Node>& temp = grid.getNodes();
-	double res = temp.at(0).t;
-	for (unsigned int j = 1; j < temp.size(); j++)
-		if (res > temp.at(j).t)
-			res = temp.at(j).t;
-	return res;
-}
-
-double mes::Calc::getMaxTemp(Grid& grid)
-{
-	std::vector<Node>& temp = grid.getNodes();
-	double res = temp.at(0).t;
-	for (unsigned int j = 1; j < temp.size(); j++)
-		if (res < temp.at(j).t)
-			res = temp.at(j).t;
-	return res;
-}
-
 arma::mat mes::Calc::getHBCMatrix(Grid& grid, unsigned int index, bool debug)
 {
 	if (debug)
@@ -348,12 +328,12 @@ arma::dvec mes::Calc::getPVector(Grid& grid, unsigned int index, bool debug)
 	arma::dvec P(4, arma::fill::zeros);
 
 	arma::dvec Ni(4, arma::fill::zeros);
-	arma::mat ksieta({ 
+	arma::mat ksieta({
 		{ -ksi, -1, ksi, -1 },
 		{ 1, -ksi, 1, ksi },
 		{ ksi, 1, -ksi, 1 },
-		{ -1, ksi, -1, -ksi } 
-	});
+		{ -1, ksi, -1, -ksi }
+		});
 
 	double length[4] = { 0, 0, 0, 0 };
 	double detJ[4] = { 0, 0, 0, 0 };
@@ -508,5 +488,97 @@ void mes::Calc::dummy2(Grid& grid, unsigned int index)
 				HBC[j][k] += (static_cast<int>(grid.checkEdge(index) / pow(2, i)) % 2) * sum[i][j][k];
 			}
 		}
+	}
+}
+
+arma::dvec mes::Calc::gauss(Grid& grid, bool debug)
+{
+	unsigned int n = grid.getNodes().size();
+	arma::dvec res(n, arma::fill::zeros);
+	arma::mat HCdT = getHCdTMatrix(grid);
+	arma::dvec GP = getGlobalPVector(grid);
+
+	arma::mat temp = HCdT;
+	temp.reshape(n, n + 1);
+	for (unsigned int i = 0; i < n; i++)
+		temp(i, n) = GP(i);
+	// [temp] = [HCdT][GP]
+
+	if (debug)
+	{
+		temp.print("[HCdT][GP]:");
+	}
+	double m = 0, s = 0;
+
+	for (unsigned int i = 0; i < n - 1; i++)
+		for (unsigned int j = i + 1; j < n; j++)
+			if (temp(i, i))
+			{
+				m = -temp(j, i) / temp(i, i);
+				for (unsigned int k = 0; k < n + 1; k++)
+					temp(j, k) += m * temp(i, k);
+			}
+
+	for (int i = n - 1; i >= 0; i--)
+	{
+		s = temp(i, n);
+		for (int j = n - 1; j >= 0; j--)
+			s -= temp(i, j) * res(j);
+		if (temp(i, i))
+			res(i) = s / temp(i, i);
+	}
+	return res;
+}
+
+void mes::Calc::applyGauss(Grid& grid, unsigned int iterations, bool debug)
+{
+	for (; iterations > 0; iterations--)
+	{
+		unsigned int n = grid.getNodes().size();
+		arma::dvec res(n, arma::fill::zeros);
+		arma::mat HCdT = getHCdTMatrix(grid);
+		arma::dvec GP = getGlobalPVector(grid);
+
+		arma::mat temp = HCdT;
+		temp.reshape(n, n + 1);
+		for (unsigned int i = 0; i < n; i++)
+			temp(i, n) = GP(i);
+		// [temp] = [HCdT][GP]
+
+		if (debug)
+			temp.print("[HCdT][GP]:");
+		double m = 0, s = 0;
+
+		for (unsigned int i = 0; i < n - 1; i++)
+			for (unsigned int j = i + 1; j < n; j++)
+				if (temp(i, i))
+				{
+					m = -temp(j, i) / temp(i, i);
+					for (unsigned int k = 0; k < n + 1; k++)
+						temp(j, k) += m * temp(i, k);
+				}
+
+		for (int i = n - 1; i >= 0; i--)
+		{
+			s = temp(i, n);
+			for (int j = n - 1; j >= 0; j--)
+				s -= temp(i, j) * res(j);
+			if (temp(i, i))
+				res(i) = s / temp(i, i);
+		}
+
+		for (unsigned int i = 0; i < n; i++)
+			grid.getNode(i)->t = res(i);
+	}
+}
+
+void mes::Calc::printExtremeTemp(Grid& grid, unsigned int iteration)
+{
+	if (!iteration)
+		std::cout << "T_min = " << grid.getMinTemp() << ", T_max = " << grid.getMaxTemp() << std::endl;
+	else
+	{
+		applyGauss(grid, iteration);
+		std::cout << "T_min = " << grid.getMinTemp() << ", T_max = " << grid.getMaxTemp() << std::endl;
 	}
 }

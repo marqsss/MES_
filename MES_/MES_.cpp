@@ -28,31 +28,23 @@ int main()
 
 			calc.getLocalHMatrix(grid, 0).print("H:");
 
-			calc.getLocalCMatrix(grid, 0, true).print("Macierz C:");
+			calc.getLocalCMatrix(grid, 0).print("Macierz C:");
 
 			calc.getHBCMatrix(grid, 24).print("Macierz HBC:");
 
-			calc.getPVector(grid, 24, true).print("P vector:");
+			calc.getPVector(grid, 24).print("P vector:");
 
 			break;
 		case 2:
 			grid.loadFromFile("TestCaseGrid.txt");
-			grid.print();
+			calc.printExtremeTemp(grid); // step 0
 
-			calc.getGlobalMatrix(grid, mes::H).print("Global H:");
-			calc.getGlobalMatrix(grid, mes::C).print("Global C:");
-			calc.getHCdTMatrix(grid).print("HCdT Matrix:");
-			std::cout << "Max temp: " << calc.getMaxTemp(grid) << ", min temp: " << calc.getMinTemp(grid) << std::endl;
-			arma::dvec globP = calc.getGlobalPVector(grid);
-			globP.print("P Vector:");
-			/*
-			arma::mat temp = (1.0 / calc.getHCdTMatrix(grid));
-			temp.replace(arma::datum::inf, 0);
-			temp = temp * globP;
-			temp.print("1/HCdT:");
-			
-			arma::dvec Tvec = (1.0/calc.getHCdTMatrix(grid))*globP;
-			Tvec.print("Tvec:");*/
+			for (unsigned int i = 0; i < grid.getTime() / grid.getDeltaTau(); i++)
+			{
+				calc.applyGauss(grid);
+				calc.printExtremeTemp(grid);
+			}
+
 			break;
 		}
 	}

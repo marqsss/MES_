@@ -3,6 +3,7 @@
 #include <fstream>
 #include "MESGrid.h"
 
+
 void mes::Grid::loadFromFile(std::string filename)
 {
 	std::fstream file;
@@ -118,5 +119,41 @@ unsigned int mes::Grid::checkEdge(unsigned int i)
 		res += Edge::Right;
 	if (!((i + 1) % (getRows() - 1)))
 		res += Edge::Top;
+	return res;
+}
+
+std::vector<double> mes::Grid::getExtremeTemp()
+{
+	std::vector<double> res;
+	res.resize(2);
+
+	double min = nodes.at(0).t, max = nodes.at(0).t;
+	for (unsigned int j = 1; j < nodes.size(); j++)
+	{
+		if (min > nodes.at(j).t)
+			min = nodes.at(j).t;
+		if (max < nodes.at(j).t)
+			max = nodes.at(j).t;
+	}
+	res.at(0) = min;
+	res.at(1) = max;
+	return res;
+}
+
+double mes::Grid::getMinTemp()
+{
+	double res = nodes.at(0).t;
+	for (unsigned int j = 1; j < nodes.size(); j++)
+		if (res > nodes.at(j).t)
+			res = nodes.at(j).t;
+	return res;
+}
+
+double mes::Grid::getMaxTemp()
+{
+	double res = nodes.at(0).t;
+	for (unsigned int j = 1; j < nodes.size(); j++)
+		if (res < nodes.at(j).t)
+			res = nodes.at(j).t;
 	return res;
 }
