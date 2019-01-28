@@ -6,6 +6,7 @@
 
 void mes::Grid::loadFromFile(std::string filename)
 {
+	reset();
 	std::fstream file;
 	file.open(filename, std::ios::in);
 	if (file.is_open())

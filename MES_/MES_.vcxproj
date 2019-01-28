@@ -118,6 +118,7 @@
   <ItemGroup>
     <Text Include="A.txt" />
     <Text Include="TestCaseGrid.txt" />
+    <Text Include="TestCase_2.txt" />
     <Text Include="testGrid.txt" />
   </ItemGroup>
   <ItemGroup>
