@@ -572,6 +572,158 @@ void mes::Calc::applyGauss(Grid& grid, unsigned int iterations, bool debug)
 	}
 }
 
+void mes::Calc::applyGaussImproved(Grid& grid, unsigned int iterations, bool debug)
+{
+	unsigned int n = grid.getNodes().size();
+	arma::dvec res(n, arma::fill::zeros);
+
+	for (; iterations > 0; iterations--)
+	{
+		res.fill(arma::fill::zeros);
+
+		arma::mat temp = getHCdTGP(grid, debug);
+
+		if (debug)
+			temp.print("[HCdT][GP]:");
+		double m = 0, s = 0;
+
+		for (unsigned int i = 0; i < n - 1; i++)
+			for (unsigned int j = i + 1; j < n; j++)
+				if (temp(i, i))
+				{
+					m = -temp(j, i) / temp(i, i);
+					for (unsigned int k = 0; k < n + 1; k++)
+						temp(j, k) += m * temp(i, k);
+				}
+
+		for (int i = n - 1; i >= 0; i--)
+		{
+			s = temp(i, n);
+			for (int j = n - 1; j >= 0; j--)
+				s -= temp(i, j) * res(j);
+			if (temp(i, i))
+				res(i) = s / temp(i, i);
+		}
+
+		for (unsigned int i = 0; i < n; i++)
+			grid.getNode(i)->t = res(i);
+	}
+}
+
+arma::mat mes::Calc::getHCdTGP(Grid& grid, bool debug) // [HCdT][GP] without re-calculating local H & C
+{
+	unsigned int n = grid.getNodes().size();
+	arma::mat HCdTGP(n, n, arma::fill::zeros);
+	arma::mat GHBC(n, n, arma::fill::zeros);
+	arma::dvec GP(n, arma::fill::zeros);
+	arma::mat globC(n, n, arma::fill::zeros);
+
+
+	for (unsigned int i = 0; i < grid.getSize(); i++) // foreach Element
+	{
+		mes::Element* e = grid.getElement(i);
+		std::vector<Node*> nodes = e->getNodes();
+
+		// HBC
+		arma::mat HBC(4, 4, arma::fill::zeros);
+		std::vector<arma::mat> PcMat(4);
+		for (int i = 0; i < 4; i++)
+			PcMat.at(i) = { 4, 4, arma::fill::zeros };
+		arma::mat Ni(2, 4, arma::fill::zeros);
+		for (unsigned int k = 0; k < PcMat.size(); k++) // for edge k
+		{
+			arma::dvec ksi(2, arma::fill::zeros), eta(2, arma::fill::zeros), ones(2, arma::fill::ones);
+			if (k == 0) // "if segment" could be remade as a vector of 2x2 matrixes  
+			{//-- +- ++ -+
+				ksi(0) -= ksi(1) = mes::Calc::ksi;
+				eta.fill(-1);
+			}
+			if (k == 1)
+			{
+				ksi.fill(1);
+				eta(0) -= eta(1) = mes::Calc::eta;
+			}
+			if (k == 2)
+			{
+				ksi(0) -= ksi(1) = -mes::Calc::ksi;
+				eta.fill(1);
+			}
+			if (k == 3)
+			{
+				ksi.fill(-1);
+				eta(0) -= eta(1) = -mes::Calc::eta;
+			}
+			// filling Ni
+			Ni.col(0) = (ones - ksi) % (ones - eta);
+			Ni.col(1) = (ones + ksi) % (ones - eta);
+			Ni.col(2) = (ones + ksi) % (ones + eta);
+			Ni.col(3) = (ones - ksi) % (ones + eta);
+			Ni = Ni / 4.0;
+			// filling PcMat
+			PcMat.at(k) += (Ni.row(0).t() * Ni.row(0)*grid.getAlpha());
+			PcMat.at(k) += (Ni.row(1).t() * Ni.row(1)*grid.getAlpha());
+			// detJ from local length
+			double detJ = (sqrt(pow(abs(nodes.at(k)->x - nodes.at((k + 1) % 4)->x), 2) +
+				pow(abs(nodes.at(k)->y - nodes.at((k + 1) % 4)->y), 2))) / 2.0;
+			PcMat.at(k) *= detJ;
+			// filling HBC
+			HBC += PcMat.at(k) * (static_cast<int>(grid.checkEdge(i) / pow(2, k)) % 2);
+		}
+
+		// H
+		arma::dvec x = { nodes.at(0)->x , nodes.at(1)->x , nodes.at(2)->x , nodes.at(3)->x };
+		arma::dvec y = { nodes.at(0)->y , nodes.at(1)->y , nodes.at(2)->y , nodes.at(3)->y };
+		arma::mat Jac = getJacobian(x, y);
+		arma::dvec detJ(4);
+		detJ = getDetJ(Jac);
+		arma::mat JacInv;
+		JacInv = getJacInv(Jac, detJ);
+		arma::mat dKsi = getDNDKsi();
+		arma::mat dEta = getDNDEta();
+		arma::mat dndx, dndy;
+		dndx = getDndx(JacInv, dKsi, dEta);
+		dndy = getDndy(JacInv, dKsi, dEta);
+		arma::mat dxdxT[4], dydyT[4];
+		arma::mat matK[4];
+		for (int i = 0; i < 4; i++)
+		{
+			dxdxT[i] = (dndx.row(i).t()*dndx.row(i))*detJ(i);
+			dydyT[i] = (dndy.row(i).t()*dndy.row(i))*detJ(i);
+			matK[i] = e->getConductivity() * (dxdxT[i] + dydyT[i]);
+		}
+		arma::mat matH;
+		for (int i = 0; i < 4; i++)
+			matH.insert_cols(i, matK[0].col(i) + matK[1].col(i) + matK[2].col(i) + matK[3].col(i));
+
+		// global HBC
+		arma::mat tempSum = matH + HBC;
+		for (unsigned int i = 0; i < matH.n_cols; i++)
+			for (unsigned int j = 0; j < matH.n_rows; j++)
+				GHBC(nodes.at(j)->index, nodes.at(i)->index) += tempSum(i, j);
+
+		// global P
+		arma::dvec locP = getPVector(grid, i); // localP
+		for (unsigned int k = 0; k < 4; k++)
+			GP(nodes.at(k)->index) -= locP(k);
+
+		// C
+		arma::mat tempC[4];
+		for (int i = 0; i < 4; i++)
+			tempC[i] = Ni.col(i) * Ni.col(i).t() * detJ[i] * grid.getSpecificHeat() * grid.getDensity();
+		arma::mat C = tempC[0] + tempC[1] + tempC[2] + tempC[3];
+		// global C
+		for (unsigned int i = 0; i < C.n_cols; i++)
+			for (unsigned int j = 0; j < C.n_rows; j++)
+				globC(e->getNodes().at(j)->index, e->getNodes().at(i)->index) += C(i, j);
+
+	}
+	HCdTGP = GHBC + globC / grid.getDeltaTau();
+	HCdTGP.reshape(n, n + 1);
+	for (unsigned int i = 0; i < n; i++)
+		HCdTGP(i, n) = GP(i);
+	return HCdTGP;
+}
+
 void mes::Calc::printExtremeTemp(Grid& grid, unsigned int iteration)
 {
 	if (!iteration)

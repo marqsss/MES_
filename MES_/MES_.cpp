@@ -40,7 +40,17 @@ int main()
 				calc.applyGauss(grid);
 				calc.printExtremeTemp(grid);
 			}
-			break;
+			break;/*
+		case 3:
+			grid.loadFromFile("TestCase_2.txt");
+			calc.printExtremeTemp(grid); // step 0
+
+			for (unsigned int i = 0; i < grid.getTime() / grid.getDeltaTau(); i++)
+			{
+				calc.applyGaussImproved(grid);
+				calc.printExtremeTemp(grid);
+			}
+			break;*/
 		}
 	}
 
