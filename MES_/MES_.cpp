@@ -23,34 +23,28 @@ int main()
 			break;
 		case 1:
 			grid.loadFromFile("TestCaseGrid.txt");
+			std::cout << "#0: ";
 			calc.printExtremeTemp(grid); // step 0
 
 			for (unsigned int i = 0; i < grid.getTime() / grid.getDeltaTau(); i++)
 			{
 				calc.applyGauss(grid);
+				std::cout << "#"<<i+1<<": ";
 				calc.printExtremeTemp(grid);
 			}
 			break;
 		case 2:
 			grid.loadFromFile("TestCase_2.txt");
+			std::cout << "#0: ";
 			calc.printExtremeTemp(grid); // step 0
 
 			for (unsigned int i = 0; i < grid.getTime() / grid.getDeltaTau(); i++)
 			{
 				calc.applyGauss(grid);
+				std::cout << "#"<<i+1<<": ";
 				calc.printExtremeTemp(grid);
 			}
-			break;/*
-		case 3:
-			grid.loadFromFile("TestCase_2.txt");
-			calc.printExtremeTemp(grid); // step 0
-
-			for (unsigned int i = 0; i < grid.getTime() / grid.getDeltaTau(); i++)
-			{
-				calc.applyGaussImproved(grid);
-				calc.printExtremeTemp(grid);
-			}
-			break;*/
+			break;
 		}
 	}
 

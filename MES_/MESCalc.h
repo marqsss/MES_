@@ -41,12 +41,8 @@ namespace mes
 		arma::dvec getGlobalPVector(Grid& grid, bool debug = false);
 		arma::mat getHCdTMatrix(Grid& grid, bool debug = false);
 		arma::dvec getTemperaturesVector(Grid& grid, bool debug = false);
-		arma::dvec dummy(Grid& grid, unsigned int index);
-		void dummy2(Grid& grid, unsigned int index);
 		arma::dvec gauss(Grid& grid, bool debug = false);
 		void applyGauss(Grid& grid, unsigned int iterations = 1, bool debug = false);
-		void applyGaussImproved(Grid& grid, unsigned int iterations = 1, bool debug = false); // does not work.
-		arma::mat getHCdTGP(Grid& grid, bool debug = false);
 		void printExtremeTemp(Grid& grid, unsigned int iterations = 0);
 
 
